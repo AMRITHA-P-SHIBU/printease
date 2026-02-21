@@ -1,3 +1,5 @@
+--1st commit--
+
 -- Select / create database
 CREATE DATABASE IF NOT EXISTS printease;
 USE printease;
@@ -17,3 +19,23 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Optional: check content
 -- SELECT * FROM users;
+
+
+--2nd commit--
+USE printease;
+ALTER TABLE users MODIFY branch VARCHAR(50) NULL;
+ALTER TABLE users MODIFY year VARCHAR(10) NULL;
+
+INSERT INTO users 
+(full_name, email, username, branch, year, phone, password, role)
+VALUES 
+(
+  'Admin1',
+  'admin1@printease.com',
+  'admin1',
+  NULL,
+  NULL,
+  '9999999999',
+  '$2b$10$zpbGRaKbj0.8A.cpB2RHLO40YvCiLRJgn3/9jnTEZBKL/HoL16gFi',
+  'admin'
+);

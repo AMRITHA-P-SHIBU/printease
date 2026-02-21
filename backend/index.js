@@ -30,7 +30,7 @@ app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
 
-// ✅ Register API
+// Register API
 app.post("/api/register", async (req, res) => {
   const {
     full_name,
@@ -44,7 +44,7 @@ app.post("/api/register", async (req, res) => {
   } = req.body;
 
   try {
-    // ❌ Block admin registration
+    // ❌ Block admin registration completely
     if (role === "admin") {
       return res.status(403).json({
         success: false,
@@ -70,7 +70,7 @@ app.post("/api/register", async (req, res) => {
         year,
         phone,
         hashedPassword,
-        role || "student"
+        role || "student" // default role
       ],
       (err, result) => {
         if (err) {
@@ -120,7 +120,7 @@ app.post("/api/login", (req, res) => {
 
     const user = results[0];
 
-    // 🔐 Role check
+    // 🔐 ROLE CHECK (IMPORTANT)
     if (user.role !== role) {
       return res.status(403).json({
         success: false,

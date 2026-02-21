@@ -40,7 +40,6 @@ function Register() {
     setLoading(true);
 
     try {
-      // ✅ Correct backend URL and endpoint
       const res = await fetch("http://localhost:5000/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,8 +47,8 @@ function Register() {
           full_name: formData.full_name,
           email: formData.email,
           username: formData.username,
-          branch: formData.branch,
-          year: formData.year,
+          branch: role === "student" ? formData.branch : null,
+          year: role === "student" ? formData.year : null,
           phone: formData.phone,
           password: formData.password,
           role
@@ -65,9 +64,7 @@ function Register() {
         setError(data.message || "Registration failed");
       }
     } catch (err) {
-      setError(
-        "Cannot reach backend. Make sure the server is running on port 5000."
-      );
+      setError("Network error");
     }
 
     setLoading(false);
@@ -80,11 +77,13 @@ function Register() {
       </button>
 
       <h1 className="login-brand">PRINTEASE</h1>
-      <p className="login-subtitle">Create your account</p>
+      <p className="login-subtitle">
+        Create {role?.charAt(0).toUpperCase() + role?.slice(1)} Account
+      </p>
 
       <div className="login-card">
         <form onSubmit={handleRegister}>
-          {/* Full Name */}
+
           <div className="input-group">
             <label>Full Name *</label>
             <input
@@ -97,7 +96,6 @@ function Register() {
             />
           </div>
 
-          {/* Email */}
           <div className="input-group">
             <label>Email Address *</label>
             <input
@@ -110,57 +108,57 @@ function Register() {
             />
           </div>
 
-          {/* Username */}
           <div className="input-group">
             <label>Username *</label>
             <input
               type="text"
               name="username"
-              placeholder="Enter Your Admission Number"
+              placeholder="Enter your username"
               value={formData.username}
               onChange={handleChange}
               required
             />
           </div>
 
-          {/* Branch & Year */}
-          <div className="input-row">
-            <div className="input-group">
-              <label>Branch *</label>
-              <select
-                name="branch"
-                value={formData.branch}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select branch</option>
-                <option value="CSE">CSE</option>
-                <option value="ECE">ECE</option>
-                <option value="EEE">EEE</option>
-                <option value="MECH">MECH</option>
-                <option value="CIVIL">CIVIL</option>
-              </select>
-            </div>
+          {/* Branch & Year ONLY for Students */}
+          {role === "student" && (
+            <div className="input-row">
+              <div className="input-group">
+                <label>Branch *</label>
+                <select
+                  name="branch"
+                  value={formData.branch}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select branch</option>
+                  <option value="CSE">CSE</option>
+                  <option value="ECE">ECE</option>
+                  <option value="EEE">EEE</option>
+                  <option value="MECH">MECH</option>
+                  <option value="CIVIL">CIVIL</option>
+                </select>
+              </div>
 
-            <div className="input-group">
-              <label>Year *</label>
-              <select
-                name="year"
-                value={formData.year}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select year</option>
-                <option value="1">1st Year</option>
-                <option value="2">2nd Year</option>
-                <option value="3">3rd Year</option>
-                <option value="4">4th Year</option>
-                <option value="5">5th Year</option>
-              </select>
+              <div className="input-group">
+                <label>Year *</label>
+                <select
+                  name="year"
+                  value={formData.year}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select year</option>
+                  <option value="1">1st Year</option>
+                  <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
+                  <option value="4">4th Year</option>
+                  <option value="5">5th Year</option>
+                </select>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Phone */}
           <div className="input-group">
             <label>Phone Number *</label>
             <input
@@ -173,7 +171,6 @@ function Register() {
             />
           </div>
 
-          {/* Password */}
           <div className="input-group">
             <label>Password *</label>
             <input
@@ -186,7 +183,6 @@ function Register() {
             />
           </div>
 
-          {/* Confirm Password */}
           <div className="input-group">
             <label>Confirm Password *</label>
             <input
@@ -205,6 +201,7 @@ function Register() {
           <button className="signin-btn" type="submit" disabled={loading}>
             {loading ? "Creating Account..." : "Create Account"}
           </button>
+
         </form>
 
         <p className="create">

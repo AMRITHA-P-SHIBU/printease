@@ -1,11 +1,11 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaUser, FaLock, FaEye } from "react-icons/fa";
 
 function Login() {
-  const { role } = useParams(); // from URL
+  const { role } = useParams();
   const navigate = useNavigate();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -24,28 +24,28 @@ function Login() {
     setLoading(true);
 
     try {
-      // ✅ Correct backend URL and endpoint
       const res = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role }),
+        body: JSON.stringify({
+          username,
+          password,
+          role,
+        }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // ✅ Save info and redirect
         localStorage.setItem("full_name", data.full_name);
         localStorage.setItem("role", data.role);
 
-        navigate(`/${data.role}/dashboard`);
+        navigate("/" + data.role + "/dashboard");
       } else {
-        // ❌ Display backend message
         setError(data.message || "Login failed");
       }
     } catch (err) {
-      // 🔴 Network error
-      setError("Cannot reach backend. Make sure the server is running.");
+      setError("Network error");
     }
 
     setLoading(false);
@@ -68,19 +68,24 @@ function Login() {
         <div className="role-badge">{roleName}</div>
 
         <form onSubmit={handleLogin}>
+
           <div className="input-group">
-            <label>Username</label>
-            <div className="input-wrapper">
-              <FaUser className="input-icon" />
-              <input
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+  <label>{role === "admin" ? "Username" : "Sjcet Id"}</label>
+  <div className="input-wrapper">
+    <FaUser className="input-icon" />
+    <input
+      type="text"
+      placeholder={
+        role === "admin"
+          ? "Enter your username"
+          : "Enter your Sjcet Id"
+      }
+      value={username}
+      onChange={(e) => setUsername(e.target.value)}
+      required
+    />
+  </div>
+</div>
 
           <div className="input-group">
             <label>Password</label>
@@ -105,15 +110,19 @@ function Login() {
         </form>
 
         <p className="forgot">Forgot your password?</p>
-        <p className="create">
-          Don't have an account?{" "}
-          <span
-            style={{ cursor: "pointer", color: "#007bff" }}
-            onClick={handleCreateAccount}
-          >
-            Create an account
-          </span>
-        </p>
+
+        {/* 👇 Hide Create Account for Admin */}
+        {role !== "admin" && (
+          <p className="create">
+            Don't have an account?{" "}
+            <span
+              style={{ cursor: "pointer", color: "#007bff" }}
+              onClick={handleCreateAccount}
+            >
+              Create an account
+            </span>
+          </p>
+        )}
       </div>
     </div>
   );
