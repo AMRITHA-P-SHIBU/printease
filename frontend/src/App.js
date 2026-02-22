@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";//n
 import Printout from "./pages/Printout";
+import SubmitPrintRequest from "./pages/SubmitPrintRequest";
 import "./App.css";
 
 function App() {
@@ -21,9 +22,9 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />   {/*n */}
         <Route path="/:role/dashboard" element={<Dashboard />} />
         <Route path="/:role/printout" element={<Printout />} />
+        <Route path="/:role/printout/submit" element={<SubmitPrintRequest />} />
       </Routes>
-    </Router>
+      </Router>
   );
-}
-
-export default App;
+ } 
+ export default App;
