@@ -5,15 +5,10 @@ import { FaPrint, FaStore } from "react-icons/fa";
 function Dashboard() {
   const navigate = useNavigate();
   const fullName = localStorage.getItem("full_name");
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
-  };
+  const role = localStorage.getItem("role");
 
   return (
     <div className="dashboard-wrapper">
-      
       {/* Navbar */}
       <div className="navbar">
         <h2 className="brand">PRINTEASE</h2>
@@ -23,7 +18,13 @@ function Dashboard() {
             {fullName ? fullName.charAt(0).toUpperCase() : "U"}
           </div>
           <span className="username">{fullName}</span>
-          <span className="logout" onClick={handleLogout}>
+          <span
+            className="logout"
+            onClick={() => {
+              localStorage.clear();
+              navigate("/");
+            }}
+          >
             Logout
           </span>
         </div>
@@ -35,7 +36,10 @@ function Dashboard() {
         <p>Choose a service to get started</p>
 
         <div className="cards">
-          <div className="card">
+          <div
+            className="card"
+            onClick={() => navigate(`/${role}/printout`)}
+          >
             <div className="icon-box">
               <FaPrint size={28} />
             </div>
@@ -52,9 +56,7 @@ function Dashboard() {
               <FaStore size={28} />
             </div>
             <h3>Bookstore</h3>
-            <p>
-              Browse available items, prebook products, and manage your orders
-            </p>
+            <p>Browse items and manage orders</p>
             <span className="get-started">Get Started →</span>
           </div>
         </div>

@@ -354,3 +354,43 @@ body {
   font-weight: 500;
   cursor: pointer;
 }
+
+/* ===== Printout Page ===== */
+
+.printout-page {
+  min-height: 100vh;
+  background: #f6faf8;
+}
+
+.printout-content {
+  margin-top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-items: center;
+}
+
+.print-card {
+  width: 600px;
+  padding: 25px 30px;
+  border-radius: 40px;
+  background: linear-gradient(135deg, #1b8a6b, #3ccf9f);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+  transition: 0.3s ease;
+}
+
+.print-card:hover {
+  transform: translateY(-4px);
+}
+
+.print-card .arrow {
+  margin-left: auto;
+  font-size: 22px;
+}

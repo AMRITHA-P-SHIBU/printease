@@ -4,7 +4,8 @@ import Welcome from "./pages/Welcome";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import "./App.css";   // <-- THIS is correct place
+import Printout from "./pages/Printout";
+import "./App.css";
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
         <Route path="/login/:role" element={<Login />} />
         <Route path="/register/:role" element={<Register />} />
         <Route path="/:role/dashboard" element={<Dashboard />} />
-
+        <Route path="/:role/printout" element={<Printout />} />
       </Routes>
     </Router>
   );
