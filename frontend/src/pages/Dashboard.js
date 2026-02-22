@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaPrint, FaStore } from "react-icons/fa";
+import './Dashboard.css';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -14,20 +15,16 @@ function Dashboard() {
         <h2 className="brand">PRINTEASE</h2>
 
         <div className="nav-right">
-          <div className="avatar">
-            {fullName ? fullName.charAt(0).toUpperCase() : "U"}
-          </div>
-          <span className="username">{fullName}</span>
-          <span
-            className="logout"
-            onClick={() => {
-              localStorage.clear();
-              navigate("/");
-            }}
-          >
-            Logout
-          </span>
-        </div>
+  <button className="nav-btn" onClick={() => navigate(-1)}>← Back</button>
+  <button className="nav-btn" onClick={() => navigate('/')}> Home</button>
+  <div className="avatar">
+    {fullName ? fullName.charAt(0).toUpperCase() : "U"}
+  </div>
+  <span className="username">{fullName}</span>
+  <span className="logout" onClick={() => { localStorage.clear(); navigate('/'); }}>
+    Logout
+  </span>
+</div>
       </div>
 
       {/* Main Content */}

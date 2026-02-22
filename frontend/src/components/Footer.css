@@ -1,0 +1,89 @@
+.footer {
+  background: #0f1e24 !important;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  padding: 0 !important;
+}
+
+.footer__inner {
+  max-width: 1100px !important;
+  margin: 0 auto !important;
+  padding: 60px 80px 48px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 48px !important;
+}
+
+.footer__brand {
+  max-width: 360px !important;
+}
+
+.footer__col {
+  min-width: 140px !important;
+  align-items: flex-start !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.footer__divider {
+  max-width: 1100px !important;
+  margin: 0 auto !important;
+  padding: 0 80px !important;
+}
+
+.footer__divider hr {
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+.footer__bottom {
+  max-width: 1100px !important;
+  margin: 0 auto !important;
+  padding: 20px 80px 36px !important;
+  text-align: center !important;
+  font-size: 12px !important;
+  color: #3d5a5e !important;
+}
+.footer__logo {
+  display: flex;
+  align-items: center;
+  gap: 12px !important;  /* increase this value */
+  margin-bottom: 14px !important;
+}
+.footer__logo span {
+  color: white !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+}
+
+.footer__desc {
+  color: #607a7e !important;
+  font-size: 14px !important;
+  line-height: 1.75 !important;
+}
+
+.footer__col h4 {
+  color: white !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.5px !important;
+  margin-bottom: 18px !important;
+}
+
+.footer__col ul li button {
+  color: #607a7e !important;
+  font-size: 14px !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+.footer__col ul li button:hover {
+  color: #2bb5a0 !important;
+}
+
+.footer__bottom {
+  color: #3d5a5e !important;
+}

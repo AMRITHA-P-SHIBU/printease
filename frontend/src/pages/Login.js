@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaUser, FaLock, FaEye } from "react-icons/fa";
+import "./Login.css";
 
 function Login() {
   const { role } = useParams();
@@ -26,11 +27,7 @@ function Login() {
       const res = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username,
-          password,
-          role,
-        }),
+        body: JSON.stringify({ username, password, role }),
       });
 
       const data = await res.json();
@@ -39,7 +36,11 @@ function Login() {
         localStorage.setItem("full_name", data.full_name);
         localStorage.setItem("role", data.role);
 
-        navigate("/" + data.role + "/dashboard");
+        if (data.role === "admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/" + data.role + "/dashboard");
+        }
       } else {
         setError(data.message || "Login failed");
       }
@@ -56,75 +57,86 @@ function Login() {
 
   return (
     <div className="login-page">
-      <button className="back-btn" onClick={() => navigate("/")}>
-        ← Back to Welcome
-      </button>
 
-      <h1 className="login-brand">PRINTEASE</h1>
-      <p className="login-subtitle">Sign in to your account</p>
+      {/* ── NAVBAR ── */}
+      <div className="login-navbar">
+        <h2 className="login-nav-brand">PRINTEASE</h2>
+        <div className="login-nav-right">
+          <button className="login-nav-btn" onClick={() => navigate(-1)}>← Back</button>
+          <button className="login-nav-btn" onClick={() => navigate('/')}>🏠 Home</button>
+        </div>
+      </div>
 
-      <div className="login-card">
-        <div className="role-badge">{roleName}</div>
+      {/* ── FORM SECTION ── */}
+      <div className="login-body">
+        <h1 className="login-brand">
+          {role === "student"
+            ? "Student Login"
+            : role === "faculty"
+            ? "Faculty/Staff Login"
+            : "Admin Login"}
+        </h1>
+        <p className="login-subtitle">Sign in to your account</p>
 
-        <form onSubmit={handleLogin}>
+        <div className="login-card">
+          <div className="role-badge">{roleName}</div>
 
-          <div className="input-group">
-  <label>{role === "admin" ? "Username" : "Sjcet Id"}</label>
-  <div className="input-wrapper">
-    <FaUser className="input-icon" />
-    <input
-      type="text"
-      placeholder={
-        role === "admin"
-          ? "Enter your username"
-          : "Enter your Sjcet Id"
-      }
-      value={username}
-      onChange={(e) => setUsername(e.target.value)}
-      required
-    />
-  </div>
-</div>
-
-          <div className="input-group">
-            <label>Password</label>
-            <div className="input-wrapper">
-              <FaLock className="input-icon" />
-              <input
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <FaEye className="eye-icon" />
+          <form onSubmit={handleLogin}>
+            <div className="input-group">
+              <label>{role === "admin" ? "Username" : "Sjcet Id"}</label>
+              <div className="input-wrapper">
+                <FaUser className="input-icon" />
+                <input
+                  type="text"
+                  placeholder={role === "admin" ? "Enter your username" : "Enter your Sjcet Id"}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          {error && <div className="error-message">{error}</div>}
+            <div className="input-group">
+              <label>Password</label>
+              <div className="input-wrapper">
+                <FaLock className="input-icon" />
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <FaEye className="eye-icon" />
+              </div>
+            </div>
 
-          <button className="signin-btn" type="submit" disabled={loading}>
-            {loading ? "Signing In..." : "Sign In"}
-          </button>
-        </form>
+            {error && <div className="error-message">{error}</div>}
 
-        <p className="forgot">Forgot your password?</p>
+            <button className="signin-btn" type="submit" disabled={loading}>
+              {loading ? "Signing In..." : "Sign In"}
+            </button>
+          </form>
 
-        {/* 👇 Hide Create Account for Admin */}
-        {role !== "admin" && (
-          <p className="create">
-            Don't have an account?{" "}
-            <span
-              style={{ cursor: "pointer", color: "#007bff" }}
-              onClick={handleCreateAccount}
-            >
-              Create an account
-            </span>
-          </p>
-        )}
+          <p className="forgot">Forgot your password?</p>
+
+          {role !== "admin" && (
+            <p className="create">
+              Don't have an account?{" "}
+              <span
+                style={{ cursor: "pointer", color: "#007bff" }}
+                onClick={handleCreateAccount}
+              >
+                Create an account
+              </span>
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 export default Login;
+
+/* append these to your existing Login.css */
