@@ -11,6 +11,8 @@ function SubmitPrintRequest() {
   const [mode, setMode]                 = useState("General");
   const [copies, setCopies]             = useState(1);
   const [printType, setPrintType]       = useState("Color");
+  const [spiralBinding, setSpiralBinding] = useState(false);
+  const [totalPages, setTotalPages]     = useState("");
   const [pageNumbers, setPageNumbers]   = useState("");
   const [description, setDescription]   = useState("");
   const [loading, setLoading]           = useState(false);
@@ -29,9 +31,13 @@ function SubmitPrintRequest() {
     setSuccessMsg("");
     setErrorMsg("");
 
-    // Validate file
     if (!documentFile) {
       setErrorMsg("Please upload a document.");
+      return;
+    }
+
+    if (!totalPages || Number(totalPages) < 1) {
+      setErrorMsg("Please enter the total number of pages.");
       return;
     }
 
@@ -39,32 +45,33 @@ function SubmitPrintRequest() {
 
     try {
       const formData = new FormData();
-      formData.append("file",         documentFile);
-      formData.append("mode",         mode);
-      formData.append("copies",       copies);
-      formData.append("print_type",   printType);
-      formData.append("page_numbers", pageNumbers);
-      formData.append("description",  description);
+      formData.append("file",           documentFile);
+      formData.append("mode",           mode);
+      formData.append("copies",         copies);
+      formData.append("print_type",     printType);
+      formData.append("spiral_binding", spiralBinding);
+      formData.append("total_pages",    totalPages);
+      formData.append("page_numbers",   pageNumbers);
+      formData.append("description",    description);
 
       const res  = await fetch("http://localhost:5000/api/print-request", {
         method: "POST",
         body: formData,
-        // ⚠️ Do NOT set Content-Type — browser sets it automatically for FormData
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-  navigate("/payment", {
-    state: {
-      printType:      printType,
-      totalPages:     data.total_pages,  // backend must return this
-      colorPageInput: pageNumbers,
-      copies:         copies,
-      requestId:      data.request_id
-    }
-  });
-}else {
+        navigate("/payment", {
+          state: {
+            printType:      printType,
+            totalPages:     data.total_pages || totalPages,
+            colorPageInput: pageNumbers,
+            copies:         copies,
+            requestId:      data.request_id
+          }
+        });
+      } else {
         setErrorMsg(data.message || "Submission failed. Please try again.");
       }
 
@@ -98,7 +105,6 @@ function SubmitPrintRequest() {
         <div style={styles.card}>
           <h2 style={styles.heading}>Submit Print Request</h2>
 
-          {/* Success / Error Messages */}
           {successMsg && <div style={styles.successMsg}>{successMsg}</div>}
           {errorMsg   && <div style={styles.errorMsg}>{errorMsg}</div>}
 
@@ -165,6 +171,34 @@ function SubmitPrintRequest() {
                 </select>
                 <span style={styles.chevron}>▾</span>
               </div>
+            </div>
+
+            {/* Spiral Binding Checkbox */}
+            <div style={styles.checkboxGroup}>
+              <input
+                type="checkbox"
+                id="spiralBinding"
+                checked={spiralBinding}
+                onChange={(e) => setSpiralBinding(e.target.checked)}
+                style={styles.checkbox}
+              />
+              <label htmlFor="spiralBinding" style={styles.checkboxLabel}>
+                 Spiral Binding
+              </label>
+            </div>
+
+            {/* Total Number of Pages */}
+            <div style={styles.fieldGroup}>
+              <label style={styles.label}>Total Number of Pages <span style={styles.required}>*</span></label>
+              <input
+                type="number"
+                placeholder="e.g. 10"
+                value={totalPages}
+                min={1}
+                required
+                onChange={(e) => setTotalPages(e.target.value)}
+                style={styles.input}
+              />
             </div>
 
             {/* Page Numbers - only for Color */}
@@ -314,6 +348,9 @@ const styles = {
   copiesInput:    { flex: 1, padding: "10px", borderRadius: "10px", border: "1px solid #e5e7eb", background: "#f3f4f6", textAlign: "center", fontSize: "16px", fontWeight: "600", color: "#1f2937", outline: "none" },
   input:          { width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e5e7eb", background: "#f3f4f6", fontSize: "15px", color: "#1f2937", outline: "none", boxSizing: "border-box" },
   textarea:       { width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e5e7eb", background: "#f3f4f6", fontSize: "15px", color: "#1f2937", resize: "vertical", outline: "none", boxSizing: "border-box", fontFamily: "'Segoe UI', sans-serif" },
+  checkboxGroup:  { display: "flex", alignItems: "center", gap: "10px", marginBottom: "22px", padding: "14px 16px", background: "#f3f4f6", borderRadius: "10px", border: "1px solid #e5e7eb" },
+  checkbox:       { width: "18px", height: "18px", accentColor: "#2bb5a0", cursor: "pointer" },
+  checkboxLabel:  { fontWeight: "600", fontSize: "14px", color: "#374151", cursor: "pointer", userSelect: "none" },
   submitBtn:      { width: "100%", padding: "14px", background: "linear-gradient(135deg, #1b8a6b, #3ccf9f)", border: "none", borderRadius: "12px", color: "white", fontSize: "16px", fontWeight: "600", cursor: "pointer", marginTop: "10px" },
   submitBtnDisabled: { width: "100%", padding: "14px", background: "#a0c4b8", border: "none", borderRadius: "12px", color: "white", fontSize: "16px", fontWeight: "600", cursor: "not-allowed", marginTop: "10px" },
 };

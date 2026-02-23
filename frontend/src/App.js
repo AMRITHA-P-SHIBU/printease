@@ -9,6 +9,8 @@ import AdminDashboard from "./pages/AdminDashboard";//n
 import Printout from "./pages/Printout";
 import SubmitPrintRequest from "./pages/SubmitPrintRequest";
 import PaymentPage from './pages/PaymentPage';
+import PrintStatus from './pages/PrintStatus';
+import PreviousActivity from './pages/PreviousActivity';
 
 import "./App.css";
 
@@ -26,6 +28,8 @@ function App() {
         <Route path="/:role/printout" element={<Printout />} />
         <Route path="/:role/printout/submit" element={<SubmitPrintRequest />} />
         <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/:role/printout/status" element={<PrintStatus />} />
+        <Route path="/:role/printout/history" element={<PreviousActivity />} />
       </Routes>
       </Router>
   );
