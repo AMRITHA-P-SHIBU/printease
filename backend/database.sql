@@ -39,3 +39,24 @@ VALUES
   '$2b$10$zpbGRaKbj0.8A.cpB2RHLO40YvCiLRJgn3/9jnTEZBKL/HoL16gFi',
   'admin'
 );
+
+
+--3rd commit--
+USE printease;
+
+CREATE TABLE IF NOT EXISTS print_requests (
+  id          INT PRIMARY KEY AUTO_INCREMENT,
+  file_path   VARCHAR(255) NOT NULL,
+  mode        VARCHAR(50)  NOT NULL,
+  copies      INT          NOT NULL DEFAULT 1,
+  print_type  VARCHAR(50)  NOT NULL,
+  page_numbers VARCHAR(100) DEFAULT NULL,
+  description TEXT         DEFAULT NULL,
+  created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);
+
+--cd backend, run npm install multer--
+--4th commit--
+ALTER TABLE print_requests 
+ADD COLUMN amount DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN payment_status VARCHAR(20) DEFAULT 'pending';

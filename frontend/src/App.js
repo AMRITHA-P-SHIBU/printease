@@ -8,6 +8,8 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";//n
 import Printout from "./pages/Printout";
 import SubmitPrintRequest from "./pages/SubmitPrintRequest";
+import PaymentPage from './pages/PaymentPage';
+
 import "./App.css";
 
 function App() {
@@ -23,6 +25,7 @@ function App() {
         <Route path="/:role/dashboard" element={<Dashboard />} />
         <Route path="/:role/printout" element={<Printout />} />
         <Route path="/:role/printout/submit" element={<SubmitPrintRequest />} />
+        <Route path="/payment" element={<PaymentPage />} />
       </Routes>
       </Router>
   );
