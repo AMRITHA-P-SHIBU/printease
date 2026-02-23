@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";//n
+import AdminRequests from "./pages/AdminRequests";
 import Printout from "./pages/Printout";
 import SubmitPrintRequest from "./pages/SubmitPrintRequest";
 import PaymentPage from './pages/PaymentPage';
@@ -23,7 +24,7 @@ function App() {
         <Route path="/login/:role" element={<Login />} />
         <Route path="/register/:role" element={<Register />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />   {/*n */}
+        <Route path="/admin/requests" element={<AdminRequests />} />
         <Route path="/:role/dashboard" element={<Dashboard />} />
         <Route path="/:role/printout" element={<Printout />} />
         <Route path="/:role/printout/submit" element={<SubmitPrintRequest />} />

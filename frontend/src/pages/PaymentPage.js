@@ -55,8 +55,11 @@ export default function PaymentPage() {
         body:    JSON.stringify({ request_id: requestId, amount: finalAmount }),
       });
       const data = await res.json();
-      if (res.ok && data.success) setPaid(true);
-      else setError(data.message || "Payment confirmation failed.");
+      if (res.ok && data.success) {
+        setPaid(true);
+        // remember token for user convenience
+        try { localStorage.setItem('last_request_id', requestId); } catch {};
+      } else setError(data.message || "Payment confirmation failed.");
     } catch {
       setError("Could not connect to server.");
     }
@@ -70,6 +73,12 @@ export default function PaymentPage() {
           <div style={{ fontSize: "52px", marginBottom: "12px" }}>✅</div>
           <h2 style={styles.title}>Payment Successful!</h2>
           <p style={styles.subtitle}>Your print request has been confirmed.</p>
+          {requestId && (
+            <div style={styles.tokenBox}>
+              <span style={styles.tokenLabel}>Token</span>
+              <span style={styles.tokenValue}>PE-{String(requestId).padStart(3,'0')}</span>
+            </div>
+          )}
           <div style={styles.amountBox}>
             <span style={styles.amountLabel}>Amount Paid</span>
             <span style={styles.amountValue}>₹{Number(finalAmount).toFixed(2)}</span>
@@ -112,6 +121,14 @@ export default function PaymentPage() {
           <p style={styles.subtitle}>Complete your payment to proceed</p>
 
           {/* Total Amount */}
+          {/* Request token */}
+          {requestId && (
+            <div style={styles.tokenBox}>
+              <span style={styles.tokenLabel}>Token</span>
+              <span style={styles.tokenValue}>PE-{String(requestId).padStart(3,'0')}</span>
+            </div>
+          )}
+
           <div style={styles.amountBox}>
             <span style={styles.amountLabel}>Total Amount</span>
             <span style={styles.amountValue}>₹{Number(finalAmount).toFixed(2)}</span>
@@ -187,6 +204,9 @@ export default function PaymentPage() {
 
 const styles = {
   page:          { minHeight: "100vh", background: "#f0f4f8", fontFamily: "'Segoe UI', sans-serif", display: "flex", flexDirection: "column" },
+  tokenBox:      { width: "100%", background: "#eaf7f5", borderRadius: "14px", padding: "12px 0", textAlign: "center", marginBottom: "16px" },
+  tokenLabel:    { display: "block", fontSize: "12px", fontWeight: "700", color: "#2bb5a0", textTransform: "uppercase", letterSpacing: "1px" },
+  tokenValue:    { display: "block", fontSize: "22px", fontWeight: "900", color: "#1a2e35", marginTop: "4px" },
   navbar:        { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", position: "sticky", top: 0, zIndex: 100, width: "100%", boxSizing: "border-box" },
   brand:         { color: "#1b8a6b", fontWeight: "800", fontSize: "22px", margin: 0 },
   navRight:      { display: "flex", alignItems: "center", gap: "12px" },

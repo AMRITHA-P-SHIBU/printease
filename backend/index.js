@@ -202,6 +202,24 @@ app.put("/api/admin/print-requests/:id/status", (req, res) => {
   });
 });
 
+// ── Get Print Request by ID (for user status lookup) ──
+app.get("/api/print-requests/:id", (req, res) => {
+  const { id } = req.params;
+  db.query(
+    `SELECT id, mode, copies, print_type, page_numbers, total_pages,
+            spiral_binding, amount, payment_status, print_status, created_at
+     FROM print_requests WHERE id = ?`,
+    [id],
+    (err, results) => {
+      if (err) return res.status(500).json({ success: false, message: "Database error" });
+      if (!results.length) return res.status(404).json({ success: false, message: "Request not found" });
+      const row = results[0];
+      row.file_url = `http://localhost:5000/${row.file_path ? row.file_path.replace(/\\/g, "/") : ""}`;
+      res.json({ success: true, data: row });
+    }
+  );
+});
+
 // ── Start Server ──
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

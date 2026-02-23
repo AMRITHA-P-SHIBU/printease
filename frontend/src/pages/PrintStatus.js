@@ -1,59 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import './Dashboard.css';
 
-const mockJobs = [
-  {
-    id: "PRN-2024-001",
-    fileName: "Assignment_Unit3.pdf",
-    pages: 12,
-    copies: 2,
-    submittedAt: "2026-02-23 09:15 AM",
-    status: "completed",
-    completedAt: "2026-02-23 09:40 AM",
-    color: false,
-  },
-  {
-    id: "PRN-2024-002",
-    fileName: "Lab_Report_Final.docx",
-    pages: 8,
-    copies: 1,
-    submittedAt: "2026-02-23 10:30 AM",
-    status: "printing",
-    completedAt: null,
-    color: true,
-  },
-  {
-    id: "PRN-2024-003",
-    fileName: "Seminar_Slides.pdf",
-    pages: 24,
-    copies: 1,
-    submittedAt: "2026-02-23 11:00 AM",
-    status: "pending",
-    completedAt: null,
-    color: false,
-  },
-  {
-    id: "PRN-2024-004",
-    fileName: "Project_Proposal.pdf",
-    pages: 5,
-    copies: 3,
-    submittedAt: "2026-02-22 03:20 PM",
-    status: "completed",
-    completedAt: "2026-02-22 03:45 PM",
-    color: false,
-  },
-  {
-    id: "PRN-2024-005",
-    fileName: "Resume_Draft.docx",
-    pages: 2,
-    copies: 5,
-    submittedAt: "2026-02-22 01:10 PM",
-    status: "cancelled",
-    completedAt: null,
-    color: true,
-  },
-];
+// placeholder for server-loaded job
 
 const statusConfig = {
   completed: {
@@ -106,18 +55,43 @@ const statusConfig = {
   },
 };
 
-const filters = ["All", "Pending", "Printing", "Completed", "Cancelled"];
+// (we no longer need filter tabs - lookup is by token)
 
 export default function PrintStatus() {
-  const [activeFilter, setActiveFilter] = useState("All");
-  const [selected, setSelected] = useState(null);
+  const [token, setToken] = useState(() => {
+    // try prefilling from storage
+    const last = localStorage.getItem('last_request_id');
+    return last ? `PE-${String(last).padStart(3,'0')}` : "";
+  });
+  const [job, setJob]     = useState(null);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const fullName = localStorage.getItem("full_name");
 
-  const filtered =
-    activeFilter === "All"
-      ? mockJobs
-      : mockJobs.filter((j) => j.status === activeFilter.toLowerCase());
+  const handleCheck = useCallback(async (overrideToken) => {
+    const raw = overrideToken !== undefined ? overrideToken : token;
+    const t    = (typeof raw === 'string' ? raw : String(raw)).trim();
+    if (!t) return;
+    setError("");
+    setJob(null);
+    const id = t.replace(/^PE-?/i, "");
+    try {
+      const res = await fetch(`http://localhost:5000/api/print-requests/${id}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setJob(data.data);
+      } else {
+        setError(data.message || "Unable to find request");
+      }
+    } catch (err) {
+      setError("Could not connect to server");
+    }
+  }, [token]);
+
+  // auto-check when token is set from storage
+  useEffect(() => {
+    if (token) handleCheck(token);
+  }, [token, handleCheck]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f0f4f3" }}>
@@ -142,162 +116,59 @@ export default function PrintStatus() {
         {/* Header */}
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, color: "#1a1a1a" }}>Print Status</h1>
-          <p style={{ margin: "6px 0 0", color: "#888", fontSize: 14 }}>Track your current and past print jobs</p>
+          <p style={{ margin: "6px 0 0", color: "#888", fontSize: 14 }}>Enter your token to view current status</p>
         </div>
 
-        {/* Summary Cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
-          {[
-            { label: "Total Jobs", value: mockJobs.length, color: "#00C2A8" },
-            { label: "Pending", value: mockJobs.filter(j => j.status === "pending").length, color: "#FF9F0A" },
-            { label: "Printing", value: mockJobs.filter(j => j.status === "printing").length, color: "#00C2A8" },
-            { label: "Completed", value: mockJobs.filter(j => j.status === "completed").length, color: "#34C759" },
-          ].map((card) => (
-            <div key={card.label} style={{
-              background: "white",
-              borderRadius: 16,
-              padding: "18px 20px",
-              boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
-            }}>
-              <div style={{ fontSize: 28, fontWeight: 800, color: card.color }}>{card.value}</div>
-              <div style={{ fontSize: 13, color: "#888", fontWeight: 500, marginTop: 2 }}>{card.label}</div>
-            </div>
-          ))}
+        {/* Token input */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          <input
+            type="text"
+            placeholder="PE-123"
+            value={token}
+            onChange={e => setToken(e.target.value)}
+            style={{ flex: 1, padding: "8px 12px", borderRadius: 6, border: "1px solid #ccc", fontSize: 14 }}
+          />
+          <button
+            onClick={() => handleCheck()}
+            style={{ padding: "8px 20px", borderRadius: 6, background: "#00C2A8", color: "white", border: "none", cursor: "pointer" }}
+          >
+            Check
+          </button>
         </div>
 
-        {/* Filter Tabs */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-          {filters.map((f) => (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              style={{
-                padding: "8px 20px",
-                borderRadius: 100,
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontWeight: 600,
-                fontSize: 13,
-                transition: "all 0.2s",
-                background: activeFilter === f ? "#00C2A8" : "white",
-                color: activeFilter === f ? "white" : "#555",
-                boxShadow: activeFilter === f ? "0 4px 12px rgba(0,194,168,0.35)" : "0 2px 8px rgba(0,0,0,0.06)",
-              }}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
+        {error && <p style={{ color: '#e53935' }}>{error}</p>}
 
-        {/* Job List */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {filtered.length === 0 ? (
-            <div style={{
-              background: "white", borderRadius: 16, padding: "40px 20px",
-              textAlign: "center", color: "#aaa", fontWeight: 500
-            }}>No print jobs found.</div>
-          ) : filtered.map((job) => {
-            const cfg = statusConfig[job.status];
-            const isSelected = selected === job.id;
-            return (
-              <div
-                key={job.id}
-                onClick={() => setSelected(isSelected ? null : job.id)}
-                style={{
-                  background: "white",
-                  borderRadius: 16,
-                  padding: "18px 22px",
-                  cursor: "pointer",
-                  boxShadow: isSelected ? "0 6px 24px rgba(0,194,168,0.18)" : "0 2px 12px rgba(0,0,0,0.05)",
-                  border: isSelected ? "1.5px solid #00C2A8" : "1.5px solid transparent",
-                  transition: "all 0.2s",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                    {/* File icon */}
-                    <div style={{
-                      width: 42, height: 42, borderRadius: 12,
-                      background: "rgba(0,194,168,0.1)",
-                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    }}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <rect x="4" y="2" width="12" height="16" rx="2" stroke="#00C2A8" strokeWidth="1.5" />
-                        <path d="M7 7h6M7 10h6M7 13h4" stroke="#00C2A8" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a1a" }}>{job.fileName}</div>
-                      <div style={{ fontSize: 12, color: "#999", marginTop: 3 }}>
-                        {job.pages} pages · {job.copies} {job.copies > 1 ? "copies" : "copy"} · {job.color ? "Color" : "B&W"}
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{
-                      display: "flex", alignItems: "center", gap: 5,
-                      padding: "5px 12px", borderRadius: 100,
-                      background: cfg.bg, color: cfg.color,
-                      fontSize: 12, fontWeight: 700,
-                    }}>
-                      {cfg.icon} {cfg.label}
-                    </span>
-                    <svg
-                      width="18" height="18" viewBox="0 0 18 18" fill="none"
-                      style={{ transition: "transform 0.2s", transform: isSelected ? "rotate(90deg)" : "rotate(0deg)" }}
-                    >
-                      <path d="M7 5l4 4-4 4" stroke="#bbb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Expanded details */}
-                {isSelected && (
-                  <div style={{
-                    marginTop: 16, paddingTop: 16,
-                    borderTop: "1px solid #f0f0f0",
-                    display: "grid", gridTemplateColumns: "1fr 1fr",
-                    gap: "10px 24px",
-                  }}>
-                    {[
-                      { label: "Job ID", value: job.id },
-                      { label: "Submitted", value: job.submittedAt },
-                      { label: "Pages × Copies", value: `${job.pages} × ${job.copies} = ${job.pages * job.copies} total` },
-                      { label: "Completed", value: job.completedAt || "—" },
-                    ].map((detail) => (
-                      <div key={detail.label}>
-                        <div style={{ fontSize: 11, color: "#bbb", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                          {detail.label}
-                        </div>
-                        <div style={{ fontSize: 13, color: "#333", fontWeight: 600, marginTop: 2 }}>{detail.value}</div>
-                      </div>
-                    ))}
-
-                    {/* Progress bar for printing status */}
-                    {job.status === "printing" && (
-                      <div style={{ gridColumn: "span 2", marginTop: 6 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span style={{ fontSize: 12, color: "#00C2A8", fontWeight: 600 }}>Printing in progress...</span>
-                          <span style={{ fontSize: 12, color: "#00C2A8", fontWeight: 600 }}>65%</span>
-                        </div>
-                        <div style={{ height: 6, background: "#eee", borderRadius: 100, overflow: "hidden" }}>
-                          <div style={{
-                            width: "65%", height: "100%",
-                            background: "linear-gradient(90deg, #00C2A8, #3DD9C5)",
-                            borderRadius: 100,
-                            animation: "progress-pulse 2s ease-in-out infinite",
-                          }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+        {job && (
+          <div style={{ background: 'white', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700 }}>Token: <strong>PE-{String(job.id).padStart(3,'0')}</strong></div>
+                <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>{new Date(job.created_at).toLocaleString()}</div>
               </div>
-            );
-          })}
-        </div>
+              <span style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 12px', borderRadius: 100,
+                background: statusConfig[(job.print_status||'Pending').toLowerCase()]?.bg || '#eee',
+                color: statusConfig[(job.print_status||'Pending').toLowerCase()]?.color || '#333',
+                fontSize: 12, fontWeight: 700,
+              }}>
+                {statusConfig[(job.print_status||'Pending').toLowerCase()]?.icon}
+                {job.print_status || 'Pending'}
+              </span>
+            </div>
+
+            {/* additional details if desired */}
+            <div style={{ marginTop: 16, fontSize: 14, color: '#444' }}>
+              <div>Type: {job.print_type}</div>
+              <div>Mode: {job.mode}</div>
+              <div>Pages: {job.total_pages}</div>
+              <div>Copies: {job.copies}</div>
+              <div>Payment: {job.payment_status === 'paid' ? 'Paid' : 'Unpaid'}</div>
+            </div>
+          </div>
+        )}
       </div>
+
 
       <style>{`
         @keyframes progress-pulse {

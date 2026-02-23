@@ -29,7 +29,7 @@ const features = [
       </svg>
     ),
     title: 'Token Queue Tracking',
-    desc: 'Get a unique token and watch your print job move through the queue in real-time. Know exactly when it\'s ready.',
+    desc: 'Get a unique token. Know when it\'s ready.',
   },
   {
     icon: (
@@ -41,7 +41,7 @@ const features = [
       </svg>
     ),
     title: 'Secure QR Payments',
-    desc: 'Auto-calculated costs with instant QR-based digital payment. Fully cashless, fully transparent.',
+    desc: 'Auto-calculated costs with instant QR-based digital payment. Fully transparent.',
   },
   {
     icon: (
@@ -400,10 +400,10 @@ export default function Home() {
             <span className="section-tag">About</span>
             <h2 className="section-title" style={{textAlign:'left'}}>Why PrintEase?</h2>
             <p className="about__desc">
-              College printing services and campus bookstores are essential — yet most colleges still rely on manual, error-prone processes. PrintEase was built to fix that.
+              College printing services and campus bookstores are essential — yet most colleges still rely on manual, error-prone processes. PrintEase is built to fix that.
             </p>
             <p className="about__desc">
-              Students and faculty can upload documents, track print jobs, make digital payments, and prebook bookstore materials — all from one clean interface. Administrators get a powerful dashboard to manage everything in real-time.
+              You can upload documents, track print jobs, make digital payments, and prebook bookstore materials — all from one clean interface. Administrators get a powerful dashboard to manage everything in real-time.
             </p>
             <div className="about__pills">
               <span>🖨️ Automated Printing</span>
