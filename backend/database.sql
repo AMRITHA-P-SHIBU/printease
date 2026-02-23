@@ -56,7 +56,35 @@ CREATE TABLE IF NOT EXISTS print_requests (
 );
 
 --cd backend, run npm install multer--
+
 --4th commit--
 ALTER TABLE print_requests 
 ADD COLUMN amount DECIMAL(10,2) DEFAULT 0,
 ADD COLUMN payment_status VARCHAR(20) DEFAULT 'pending';
+
+
+--5th commit--
+-- ── ALTER existing table ──
+ALTER TABLE print_requests
+ADD COLUMN total_pages    INT     NOT NULL DEFAULT 1,
+ADD COLUMN spiral_binding BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- ── (DONOT RUN!!!)Full updated CREATE TABLE (for reference) ──
+CREATE TABLE IF NOT EXISTS print_requests (
+  id             INT PRIMARY KEY AUTO_INCREMENT,
+  file_path      VARCHAR(255)  NOT NULL,
+  mode           VARCHAR(50)   NOT NULL,
+  copies         INT           NOT NULL DEFAULT 1,
+  print_type     VARCHAR(50)   NOT NULL,
+  page_numbers   VARCHAR(100)  DEFAULT NULL,
+  description    TEXT          DEFAULT NULL,
+  total_pages    INT           NOT NULL DEFAULT 1,
+  spiral_binding BOOLEAN       NOT NULL DEFAULT FALSE,
+  amount         DECIMAL(10,2) DEFAULT 0,
+  payment_status VARCHAR(20)   DEFAULT 'pending',
+  created_at     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Also add print_status column if not already present
+ALTER TABLE print_requests
+ADD COLUMN print_status VARCHAR(20) DEFAULT 'Pending';

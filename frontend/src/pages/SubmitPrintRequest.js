@@ -62,16 +62,19 @@ function SubmitPrintRequest() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        navigate("/payment", {
-          state: {
-            printType:      printType,
-            totalPages:     data.total_pages || totalPages,
-            colorPageInput: pageNumbers,
-            copies:         copies,
-            requestId:      data.request_id
-          }
-        });
-      } else {
+navigate("/payment", {
+  state: {
+    printType:     printType,
+    totalPages:    data.total_pages || totalPages,
+    colorPageInput: pageNumbers,
+    copies:        copies,
+    spiralBinding: spiralBinding,
+    finalAmount:   data.final_amount,
+    requestId:     data.request_id,
+    mode:          mode            // ← add this
+  }
+});
+} else {
         setErrorMsg(data.message || "Submission failed. Please try again.");
       }
 

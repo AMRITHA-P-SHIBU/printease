@@ -30,6 +30,7 @@ function App() {
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/:role/printout/status" element={<PrintStatus />} />
         <Route path="/:role/printout/history" element={<PreviousActivity />} />
+        
       </Routes>
       </Router>
   );

@@ -1,23 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
 
-// ── Mock data (replace with real API calls) ──────────────────────────
-const mockStats = {
-  totalToday: 24,
-  pending: 7,
-  fastTrack: 3,
-  revenue: 1840,
-};
-
-const mockRequests = [
-  { id: 1, token: 'PE-001', user: 'Arun Kumar',   type: 'Fast-Track', pages: 12, copies: 2, amount: 96,  status: 'Printing',  paid: true  },
-  { id: 2, token: 'PE-002', user: 'Meena Raj',    type: 'General',    pages: 8,  copies: 1, amount: 24,  status: 'Pending',   paid: true  },
-  { id: 3, token: 'PE-003', user: 'Suresh P.',    type: 'General',    pages: 20, copies: 3, amount: 180, status: 'Completed', paid: true  },
-  { id: 4, token: 'PE-004', user: 'Divya S.',     type: 'Fast-Track', pages: 5,  copies: 1, amount: 55,  status: 'Pending',   paid: false },
-  { id: 5, token: 'PE-005', user: 'Karthik M.',   type: 'General',    pages: 30, copies: 1, amount: 90,  status: 'Completed', paid: true  },
-];
-
-// ── Sub-components ────────────────────────────────────────────────────
 function StatCard({ icon, iconClass, value, label }) {
   return (
     <div className="stat-card">
@@ -32,24 +15,66 @@ function StatCard({ icon, iconClass, value, label }) {
 
 function StatusBadge({ status }) {
   const map = { Pending: 'badge-pending', Printing: 'badge-printing', Completed: 'badge-completed' };
-  return <span className={`badge ${map[status] || ''}`}>{status}</span>;
+  return <span className={`badge ${map[status] || 'badge-pending'}`}>{status || 'Pending'}</span>;
 }
 
 function TypeBadge({ type }) {
-  return <span className={`badge ${type === 'Fast-Track' ? 'badge-fast' : 'badge-general'}`}>{type}</span>;
+  return <span className={`badge ${type === 'Fast Track' ? 'badge-fast' : 'badge-general'}`}>{type}</span>;
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────
-export default function AdminDashboard() {
-  const [requests, setRequests] = useState(mockRequests);
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Morning';
+  if (h < 17) return 'Afternoon';
+  return 'Evening';
+}
 
-  const updateStatus = (id, newStatus) => {
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+export default function AdminDashboard() {
+  const [requests, setRequests] = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState('');
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/admin/print-requests')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setRequests(data.data);
+        else setError('Failed to load requests');
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('Could not connect to server');
+        setLoading(false);
+      });
+  }, []);
+
+  const updateStatus = async (id, newStatus) => {
+    try {
+      await fetch(`http://localhost:5000/api/admin/print-requests/${id}/status`, {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ status: newStatus }),
+      });
+      setRequests(prev => prev.map(r => r.id === id ? { ...r, print_status: newStatus } : r));
+    } catch (err) {
+      console.error('Status update failed:', err);
+    }
   };
+
+  const today     = new Date().toDateString();
+  const todayReqs = requests.filter(r => new Date(r.created_at).toDateString() === today);
+  const stats = {
+    totalToday: todayReqs.length,
+    pending:    requests.filter(r => (r.print_status || 'Pending') === 'Pending').length,
+    fastTrack:  requests.filter(r => r.mode === 'Fast Track').length,
+    revenue:    requests.filter(r => r.payment_status === 'paid').reduce((sum, r) => sum + Number(r.amount), 0),
+  };
+
+  const latest = requests.slice(0, 5);
 
   return (
     <AdminLayout adminName="Admin">
-      {/* Welcome Banner */}
+
       <div className="welcome-banner">
         <div>
           <h1 className="welcome-title">Good {getGreeting()}, Admin 👋</h1>
@@ -57,15 +82,13 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stat Cards */}
       <div className="stat-grid">
-        <StatCard icon="🖨️" iconClass="teal"   value={mockStats.totalToday} label="Requests Today" />
-        <StatCard icon="⏳" iconClass="orange"  value={mockStats.pending}    label="Pending"        />
-        <StatCard icon="⚡" iconClass="red"     value={mockStats.fastTrack}  label="Fast-Track"     />
-        <StatCard icon="₹" iconClass="blue"    value={`₹${mockStats.revenue}`} label="Today's Revenue" />
+        <StatCard icon="🖨️" iconClass="teal"   value={stats.totalToday}              label="Requests Today"  />
+        <StatCard icon="⏳" iconClass="orange"  value={stats.pending}                  label="Pending"         />
+        <StatCard icon="⚡" iconClass="red"     value={stats.fastTrack}                label="Fast-Track"      />
+        <StatCard icon="₹" iconClass="blue"    value={`₹${stats.revenue.toFixed(0)}`} label="Today's Revenue" />
       </div>
 
-      {/* Recent Print Requests Table */}
       <div className="section-card">
         <div className="section-header">
           <div>
@@ -76,50 +99,83 @@ export default function AdminDashboard() {
             View All →
           </button>
         </div>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Token</th>
-              <th>User</th>
-              <th>Type</th>
-              <th>Pages</th>
-              <th>Copies</th>
-              <th>Amount</th>
-              <th>Payment</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map(req => (
-              <tr key={req.id}>
-                <td><strong>{req.token}</strong></td>
-                <td>{req.user}</td>
-                <td><TypeBadge type={req.type} /></td>
-                <td>{req.pages}</td>
-                <td>{req.copies}</td>
-                <td>₹{req.amount}</td>
-                <td>
-                  <span className={`badge ${req.paid ? 'badge-completed' : 'badge-pending'}`}>
-                    {req.paid ? 'Paid' : 'Unpaid'}
-                  </span>
-                </td>
-                <td><StatusBadge status={req.status} /></td>
-                <td>
-                  <select
-                    className="status-select"
-                    value={req.status}
-                    onChange={e => updateStatus(req.id, e.target.value)}
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Printing">Printing</option>
-                    <option value="Completed">Completed</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+        {loading && <p className="empty-msg">Loading requests...</p>}
+        {error   && <p className="empty-msg" style={{color:'#e53935'}}>{error}</p>}
+
+        {!loading && !error && (
+          <div style={{overflowX:'auto'}}>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Document</th>
+                  <th>Mode</th>
+                  <th>Print Type</th>
+                  <th>Pages</th>
+                  <th>Copies</th>
+                  <th>Spiral</th>
+                  <th>Amount</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {latest.length === 0 && (
+                  <tr><td colSpan="11" className="empty-msg">No requests yet</td></tr>
+                )}
+                {latest.map((req) => (
+                  <tr key={req.id}>
+                    <td><strong>PE-{String(req.id).padStart(3,'0')}</strong></td>
+
+                    {/* ── Document View Button ── */}
+                    <td>
+                      {req.file_url ? (
+                        <a
+                          href={req.file_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={viewBtnStyle}
+                        >
+                          📄 View
+                        </a>
+                      ) : '—'}
+                    </td>
+
+                    <td><TypeBadge type={req.mode} /></td>
+                    <td style={{fontSize:'13px'}}>{req.print_type}</td>
+                    <td>{req.total_pages}</td>
+                    <td>{req.copies}</td>
+                    <td>
+                      <span className={`badge ${req.spiral_binding ? 'badge-fast' : 'badge-general'}`}>
+                        {req.spiral_binding ? 'Yes' : 'No'}
+                      </span>
+                    </td>
+                    <td><strong>₹{Number(req.amount).toFixed(2)}</strong></td>
+                    <td>
+                      <span className={`badge ${req.payment_status === 'paid' ? 'badge-completed' : 'badge-pending'}`}>
+                        {req.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
+                      </span>
+                    </td>
+                    <td><StatusBadge status={req.print_status || 'Pending'} /></td>
+                    <td>
+                      <select
+                        className="status-select"
+                        value={req.print_status || 'Pending'}
+                        onChange={e => updateStatus(req.id, e.target.value)}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Printing">Printing</option>
+                        <option value="Completed">Completed</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Quick Summary Row */}
@@ -129,13 +185,16 @@ export default function AdminDashboard() {
             <div className="section-title">⚡ Fast-Track Queue</div>
           </div>
           <div className="quick-list">
-            {requests.filter(r => r.type === 'Fast-Track').map(r => (
-              <div key={r.id} className="quick-item">
-                <span className="quick-token">{r.token}</span>
-                <span className="quick-user">{r.user}</span>
-                <StatusBadge status={r.status} />
-              </div>
-            ))}
+            {requests.filter(r => r.mode === 'Fast Track').length === 0
+              ? <p className="empty-msg">No fast-track requests</p>
+              : requests.filter(r => r.mode === 'Fast Track').slice(0,5).map(r => (
+                  <div key={r.id} className="quick-item">
+                    <span className="quick-token">PE-{String(r.id).padStart(3,'0')}</span>
+                    <span className="quick-user">{r.print_type} · {r.total_pages}pg</span>
+                    <StatusBadge status={r.print_status || 'Pending'} />
+                  </div>
+                ))
+            }
           </div>
         </div>
 
@@ -144,13 +203,13 @@ export default function AdminDashboard() {
             <div className="section-title">📌 Pending Payments</div>
           </div>
           <div className="quick-list">
-            {requests.filter(r => !r.paid).length === 0
+            {requests.filter(r => r.payment_status !== 'paid').length === 0
               ? <p className="empty-msg">All payments cleared ✓</p>
-              : requests.filter(r => !r.paid).map(r => (
+              : requests.filter(r => r.payment_status !== 'paid').slice(0,5).map(r => (
                   <div key={r.id} className="quick-item">
-                    <span className="quick-token">{r.token}</span>
-                    <span className="quick-user">{r.user}</span>
-                    <span className="badge badge-pending">₹{r.amount}</span>
+                    <span className="quick-token">PE-{String(r.id).padStart(3,'0')}</span>
+                    <span className="quick-user">{r.print_type}</span>
+                    <span className="badge badge-pending">₹{Number(r.amount).toFixed(0)}</span>
                   </div>
                 ))
             }
@@ -163,12 +222,17 @@ export default function AdminDashboard() {
   );
 }
 
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Morning';
-  if (h < 17) return 'Afternoon';
-  return 'Evening';
-}
+const viewBtnStyle = {
+  color: '#2bb5a0',
+  fontWeight: '600',
+  fontSize: '12px',
+  textDecoration: 'none',
+  padding: '4px 10px',
+  border: '1.5px solid #2bb5a0',
+  borderRadius: '6px',
+  whiteSpace: 'nowrap',
+  display: 'inline-block',
+};
 
 const dashboardStyles = `
   .welcome-banner {
@@ -200,17 +264,13 @@ const dashboardStyles = `
     outline: none;
     transition: border-color 0.2s;
   }
-  .status-select:focus {
-    border-color: var(--teal);
-  }
+  .status-select:focus { border-color: var(--teal); }
   .quick-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 18px;
   }
-  .quick-list {
-    padding: 8px 0;
-  }
+  .quick-list { padding: 8px 0; }
   .quick-item {
     display: flex;
     align-items: center;
@@ -227,16 +287,8 @@ const dashboardStyles = `
     padding: 2px 8px;
     border-radius: 4px;
   }
-  .quick-user {
-    flex: 1;
-    font-size: 13px;
-    color: var(--navy);
-  }
-  .empty-msg {
-    padding: 16px 24px;
-    font-size: 13px;
-    color: var(--grey-400);
-  }
+  .quick-user { flex: 1; font-size: 13px; color: var(--navy); }
+  .empty-msg  { padding: 16px 24px; font-size: 13px; color: var(--grey-400); }
   @media (max-width: 768px) {
     .quick-row { grid-template-columns: 1fr; }
   }

@@ -17,7 +17,7 @@ function Printout() {
 
         <div className="nav-right">
           <button className="nav-btn" onClick={() => navigate(-1)}>← Back</button>
-          <button className="nav-btn" onClick={() => navigate('/')}>Home</button>
+          <button className="nav-btn" onClick={() => navigate('/')}>🏠 Home</button>
           <div className="avatar">
             {fullName ? fullName.charAt(0).toUpperCase() : "U"}
           </div>

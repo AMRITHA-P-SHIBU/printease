@@ -1,38 +1,36 @@
 require("dotenv").config();
 
-const express = require("express");
-const mysql   = require("mysql2");
-const cors    = require("cors");
-const bcrypt  = require("bcrypt");
-const multer  = require("multer");
-const path    = require("path");
-const fs      = require("fs");
+const express  = require("express");
+const mysql    = require("mysql2");
+const cors     = require("cors");
+const bcrypt   = require("bcrypt");
+const multer   = require("multer");
+const path     = require("path");
+const fs       = require("fs");
+const { calculateAmount } = require("./calcHelper");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ── Make sure uploads folder exists ──
+// ── Uploads folder ──
 const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-
-// ── Serve uploaded files statically ──
 app.use("/uploads", express.static(uploadsDir));
 
-// ── MySQL connection ──
+// ── MySQL ──
 const db = mysql.createConnection({
   host:     process.env.DB_HOST,
   user:     process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME
 });
-
 db.connect((err) => {
   if (err) console.error("Database connection failed:", err);
   else console.log("Connected to MySQL Database");
 });
 
-// ── MULTER CONFIG ──
+// ── Multer ──
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename:    (req, file, cb) => {
@@ -40,52 +38,35 @@ const storage = multer.diskStorage({
     cb(null, unique + path.extname(file.originalname));
   }
 });
-
 const fileFilter = (req, file, cb) => {
   const allowed = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"];
   const ext = path.extname(file.originalname).toLowerCase();
   allowed.includes(ext) ? cb(null, true) : cb(new Error("File type not supported"), false);
 };
-
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }
-});
+const upload = multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
 
 // ════════════════════════════════════════
 //  ROUTES
 // ════════════════════════════════════════
 
-// Test route
 app.get("/", (req, res) => res.send("Backend is running 🚀"));
 
 // ── Register ──
 app.post("/api/register", async (req, res) => {
   const { full_name, email, username, branch, year, phone, password, role } = req.body;
-
   try {
     if (role === "admin") {
       return res.status(403).json({ success: false, message: "Admin registration is not allowed" });
     }
-
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const sql = `
-      INSERT INTO users (full_name, email, username, branch, year, phone, password, role)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    db.query(sql, [full_name, email, username, branch, year, phone, hashedPassword, role || "student"], (err, result) => {
+    const sql = `INSERT INTO users (full_name, email, username, branch, year, phone, password, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    db.query(sql, [full_name, email, username, branch, year, phone, hashedPassword, role || "student"], (err) => {
       if (err) {
-        if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ success: false, message: "Email or Username already exists" });
-        }
+        if (err.code === "ER_DUP_ENTRY") return res.status(400).json({ success: false, message: "Email or Username already exists" });
         return res.status(500).json({ success: false, message: "Database error" });
       }
       res.json({ success: true, message: "Account created successfully" });
     });
-
   } catch (error) {
     res.status(500).json({ success: false, message: "Server error" });
   }
@@ -94,21 +75,13 @@ app.post("/api/register", async (req, res) => {
 // ── Login ──
 app.post("/api/login", (req, res) => {
   const { username, password, role } = req.body;
-
-  const sql = "SELECT * FROM users WHERE username = ?";
-  db.query(sql, [username], async (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Server error" });
-    if (results.length === 0) return res.status(400).json({ success: false, message: "User not found" });
-
+  db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
+    if (err)             return res.status(500).json({ success: false, message: "Server error" });
+    if (!results.length) return res.status(400).json({ success: false, message: "User not found" });
     const user = results[0];
-
-    if (user.role !== role) {
-      return res.status(403).json({ success: false, message: "Access denied: Incorrect role" });
-    }
-
+    if (user.role !== role) return res.status(403).json({ success: false, message: "Access denied: Incorrect role" });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ success: false, message: "Invalid password" });
-
     res.json({ success: true, message: "Login successful", role: user.role, full_name: user.full_name });
   });
 });
@@ -116,28 +89,42 @@ app.post("/api/login", (req, res) => {
 // ── Print Request ──
 app.post("/api/print-request", upload.single("file"), (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: "No file uploaded" });
-    }
+    if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" });
 
-    const { mode, copies, print_type, page_numbers, description, total_pages } = req.body;
+    const { mode, copies, print_type, page_numbers, description, spiral_binding, total_pages } = req.body;
 
-    if (!mode || !copies || !print_type) {
+    if (!mode || !copies || !print_type || !total_pages) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    const sql = `
-      INSERT INTO print_requests (file_path, mode, copies, print_type, page_numbers, description)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `;
+    // ── Use total_pages entered by user ──
+    const tp = parseInt(total_pages) || 1;
 
+    // ── Calculate amount on backend ──
+const finalAmount = calculateAmount({
+  printType:      print_type,
+  totalPages:     tp,
+  colorPageInput: page_numbers || "",
+  copies:         copies,
+  spiralBinding:  spiral_binding,
+  mode:           mode            // ← add this
+});
+
+    const sql = `
+      INSERT INTO print_requests 
+        (file_path, mode, copies, print_type, page_numbers, description, total_pages, spiral_binding, amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
     const values = [
       req.file.path,
       mode,
       parseInt(copies),
       print_type,
-      page_numbers || null,
-      description  || null
+      page_numbers  || null,
+      description   || null,
+      tp,
+      spiral_binding === "true" || spiral_binding === true ? 1 : 0,
+      finalAmount
     ];
 
     db.query(sql, values, (err, result) => {
@@ -146,10 +133,12 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
         return res.status(500).json({ success: false, message: "Database error" });
       }
       return res.status(200).json({
-        success:     true,
-        message:     "Print request submitted successfully",
-        request_id:  result.insertId,
-        total_pages: parseInt(total_pages) || 1   // ← returned to frontend for payment calc
+        success:        true,
+        message:        "Print request submitted successfully",
+        request_id:     result.insertId,
+        total_pages:    tp,
+        spiral_binding: spiral_binding === "true" || spiral_binding === true,
+        final_amount:   finalAmount
       });
     });
 
@@ -162,21 +151,58 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
 // ── Payment Confirm ──
 app.post("/api/payment-confirm", (req, res) => {
   const { request_id, amount } = req.body;
-
   if (!request_id || !amount) {
     return res.status(400).json({ success: false, message: "Missing request_id or amount" });
   }
-
-  const sql = "UPDATE print_requests SET payment_status='paid', amount=? WHERE id=?";
-  db.query(sql, [amount, request_id], (err) => {
-    if (err) {
-      console.error("Payment confirm error:", err);
-      return res.status(500).json({ success: false, message: "Database error" });
+  db.query(
+    "UPDATE print_requests SET payment_status='paid', amount=? WHERE id=?",
+    [amount, request_id],
+    (err) => {
+      if (err) {
+        console.error("Payment confirm error:", err);
+        return res.status(500).json({ success: false, message: "Database error" });
+      }
+      res.json({ success: true, message: "Payment confirmed" });
     }
-    res.json({ success: true, message: "Payment confirmed" });
+  );
+});
+
+// ── Get All Print Requests (Admin) ──
+app.get("/api/admin/print-requests", (req, res) => {
+  const sql = `
+    SELECT id, file_path, mode, copies, print_type, page_numbers, total_pages,
+           spiral_binding, amount, payment_status, print_status, created_at
+    FROM print_requests
+    ORDER BY created_at DESC
+  `;
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ success: false, message: "Database error" });
+
+    // Build full URL for each file
+    const data = results.map(row => ({
+      ...row,
+      file_url: `http://localhost:5000/${row.file_path.replace(/\\/g, "/")}`
+    }));
+
+    res.json({ success: true, data });
+  });
+});
+
+// ── Update Print Status (Admin) ──
+app.put("/api/admin/print-requests/:id/status", (req, res) => {
+  const { id }     = req.params;
+  const { status } = req.body;
+  const allowed    = ["Pending", "Printing", "Completed"];
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ success: false, message: "Invalid status" });
+  }
+  db.query("UPDATE print_requests SET print_status=? WHERE id=?", [status, id], (err) => {
+    if (err) return res.status(500).json({ success: false, message: "Database error" });
+    res.json({ success: true, message: "Status updated" });
   });
 });
 
 // ── Start Server ──
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
