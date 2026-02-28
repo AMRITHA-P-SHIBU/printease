@@ -88,3 +88,40 @@ CREATE TABLE IF NOT EXISTS print_requests (
 -- Also add print_status column if not already present
 ALTER TABLE print_requests
 ADD COLUMN print_status VARCHAR(20) DEFAULT 'Pending';
+
+
+--- 6th commit
+USE printease;
+
+CREATE TABLE IF NOT EXISTS bookstore_items (
+  id          INT PRIMARY KEY AUTO_INCREMENT,
+  name        VARCHAR(100) NOT NULL,
+  price       DECIMAL(10,2) NOT NULL,
+  stock       INT NOT NULL DEFAULT 0,
+  icon        VARCHAR(50) DEFAULT 'book',
+  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS bookstore_orders (
+  id           INT PRIMARY KEY AUTO_INCREMENT,
+  username     VARCHAR(50) NOT NULL,
+  total_amount DECIMAL(10,2) NOT NULL,
+  status       VARCHAR(20) DEFAULT 'Pending',
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS bookstore_order_items (
+  id        INT PRIMARY KEY AUTO_INCREMENT,
+  order_id  INT NOT NULL,
+  item_id   INT NOT NULL,
+  item_name VARCHAR(100) NOT NULL,
+  price     DECIMAL(10,2) NOT NULL,
+  quantity  INT NOT NULL,
+  FOREIGN KEY (order_id) REFERENCES bookstore_orders(id)
+);
+
+INSERT INTO bookstore_items (name, price, stock, icon) VALUES
+  ('Record Book',      50.00, 100, 'book'),
+  ('Observation Book', 45.00, 100, 'book-open'),
+  ('Notebooks',        30.00, 200, 'notebook'),
+  ('A4 Papers',       200.00,  50, 'file');

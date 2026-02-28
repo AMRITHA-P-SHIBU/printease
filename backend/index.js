@@ -97,18 +97,16 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
-    // ── Use total_pages entered by user ──
     const tp = parseInt(total_pages) || 1;
 
-    // ── Calculate amount on backend ──
-const finalAmount = calculateAmount({
-  printType:      print_type,
-  totalPages:     tp,
-  colorPageInput: page_numbers || "",
-  copies:         copies,
-  spiralBinding:  spiral_binding,
-  mode:           mode            // ← add this
-});
+    const finalAmount = calculateAmount({
+      printType:      print_type,
+      totalPages:     tp,
+      colorPageInput: page_numbers || "",
+      copies:         copies,
+      spiralBinding:  spiral_binding,
+      mode:           mode
+    });
 
     const sql = `
       INSERT INTO print_requests 
@@ -177,13 +175,10 @@ app.get("/api/admin/print-requests", (req, res) => {
   `;
   db.query(sql, (err, results) => {
     if (err) return res.status(500).json({ success: false, message: "Database error" });
-
-    // Build full URL for each file
     const data = results.map(row => ({
       ...row,
       file_url: `http://localhost:5000/${row.file_path.replace(/\\/g, "/")}`
     }));
-
     res.json({ success: true, data });
   });
 });
@@ -202,7 +197,7 @@ app.put("/api/admin/print-requests/:id/status", (req, res) => {
   });
 });
 
-// ── Get Print Request by ID (for user status lookup) ──
+// ── Get Print Request by ID ──
 app.get("/api/print-requests/:id", (req, res) => {
   const { id } = req.params;
   db.query(
@@ -220,7 +215,172 @@ app.get("/api/print-requests/:id", (req, res) => {
   );
 });
 
+// ════════════════════════════════════════
+//  BOOKSTORE ROUTES
+// ════════════════════════════════════════
+
+// ── Get all bookstore items ──
+app.get("/api/bookstore/items", (req, res) => {
+  db.query("SELECT * FROM bookstore_items ORDER BY id ASC", (err, results) => {
+    if (err) return res.status(500).json({ success: false, message: "Database error" });
+    res.json({ success: true, data: results });
+  });
+});
+
+// ── Place a bookstore order ──
+app.post("/api/bookstore/order", (req, res) => {
+  const { username, items } = req.body;
+
+  if (!username || !items || !items.length) {
+    return res.status(400).json({ success: false, message: "Missing required fields" });
+  }
+
+  const totalAmount = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  db.query(
+    "INSERT INTO bookstore_orders (username, total_amount) VALUES (?, ?)",
+    [username, totalAmount],
+    (err, result) => {
+      if (err) return res.status(500).json({ success: false, message: "Database error" });
+
+      const orderId = result.insertId;
+      const orderItems = items.map(i => [orderId, i.id, i.name, i.price, i.quantity]);
+
+      db.query(
+        "INSERT INTO bookstore_order_items (order_id, item_id, item_name, price, quantity) VALUES ?",
+        [orderItems],
+        (err2) => {
+          if (err2) return res.status(500).json({ success: false, message: "Database error" });
+          res.json({
+            success: true,
+            message: "Order placed successfully",
+            order_id: orderId,
+            total_amount: totalAmount
+          });
+        }
+      );
+    }
+  );
+});
+
+// ── Get orders by username (student order history) ──
+app.get("/api/bookstore/orders/:username", (req, res) => {
+  const { username } = req.params;
+  db.query(
+    `SELECT o.id, o.total_amount, o.status, o.created_at,
+            oi.item_name, oi.price, oi.quantity
+     FROM bookstore_orders o
+     JOIN bookstore_order_items oi ON o.id = oi.order_id
+     WHERE o.username = ?
+     ORDER BY o.created_at DESC`,
+    [username],
+    (err, results) => {
+      if (err) return res.status(500).json({ success: false, message: "Database error" });
+
+      const ordersMap = {};
+      results.forEach(row => {
+        if (!ordersMap[row.id]) {
+          ordersMap[row.id] = {
+            id: row.id,
+            total_amount: row.total_amount,
+            status: row.status,
+            created_at: row.created_at,
+            items: []
+          };
+        }
+        ordersMap[row.id].items.push({
+          item_name: row.item_name,
+          price: row.price,
+          quantity: row.quantity
+        });
+      });
+
+      res.json({ success: true, data: Object.values(ordersMap) });
+    }
+  );
+});
+
+// ── Get bookstore order by ID (for token lookup) ──
+app.get("/api/bookstore/order/:id", (req, res) => {
+  const { id } = req.params;
+  db.query(
+    `SELECT o.id, o.username, o.total_amount, o.status, o.created_at,
+            oi.item_name, oi.price, oi.quantity
+     FROM bookstore_orders o
+     JOIN bookstore_order_items oi ON o.id = oi.order_id
+     WHERE o.id = ?`,
+    [id],
+    (err, results) => {
+      if (err) return res.status(500).json({ success: false, message: "Database error" });
+      if (!results.length) return res.status(404).json({ success: false, message: "Order not found" });
+
+      const order = {
+        id: results[0].id,
+        username: results[0].username,
+        total_amount: results[0].total_amount,
+        status: results[0].status,
+        created_at: results[0].created_at,
+        items: results.map(r => ({
+          item_name: r.item_name,
+          price: r.price,
+          quantity: r.quantity
+        }))
+      };
+
+      res.json({ success: true, data: order });
+    }
+  );
+});
+
+// ── Get all bookstore orders (Admin) ──
+app.get("/api/admin/bookstore/orders", (req, res) => {
+  db.query(
+    `SELECT o.id, o.username, o.total_amount, o.status, o.created_at,
+            oi.item_name, oi.price, oi.quantity
+     FROM bookstore_orders o
+     JOIN bookstore_order_items oi ON o.id = oi.order_id
+     ORDER BY o.created_at DESC`,
+    (err, results) => {
+      if (err) return res.status(500).json({ success: false, message: "Database error" });
+
+      const ordersMap = {};
+      results.forEach(row => {
+        if (!ordersMap[row.id]) {
+          ordersMap[row.id] = {
+            id: row.id,
+            username: row.username,
+            total_amount: row.total_amount,
+            status: row.status,
+            created_at: row.created_at,
+            items: []
+          };
+        }
+        ordersMap[row.id].items.push({
+          item_name: row.item_name,
+          price: row.price,
+          quantity: row.quantity
+        });
+      });
+
+      res.json({ success: true, data: Object.values(ordersMap) });
+    }
+  );
+});
+
+// ── Update bookstore order status (Admin) ──
+app.put("/api/admin/bookstore/orders/:id/status", (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const allowed = ["Pending", "Processing", "Completed"];
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ success: false, message: "Invalid status" });
+  }
+  db.query("UPDATE bookstore_orders SET status=? WHERE id=?", [status, id], (err) => {
+    if (err) return res.status(500).json({ success: false, message: "Database error" });
+    res.json({ success: true, message: "Order status updated" });
+  });
+});
+
 // ── Start Server ──
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
