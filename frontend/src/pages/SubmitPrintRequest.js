@@ -53,6 +53,7 @@ function SubmitPrintRequest() {
       formData.append("total_pages",    totalPages);
       formData.append("page_numbers",   pageNumbers);
       formData.append("description",    description);
+      formData.append("username", localStorage.getItem("username") || "");
 
       const res  = await fetch("http://localhost:5000/api/print-request", {
         method: "POST",

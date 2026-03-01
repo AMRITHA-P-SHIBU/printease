@@ -26,24 +26,48 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME
 });
 db.connect((err) => {
-  if (err) console.error("Database connection failed:", err);
-  else console.log("Connected to MySQL Database");
+  if (err) {
+    console.error("Database connection failed:", err);
+  } else {
+    console.log("Connected to MySQL Database");
+  }
 });
 
 // ── Multer ──
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename:    (req, file, cb) => {
+    // keep the original filename after the unique prefix so we can
+    // display it back to the user later. e.g. "1234567890-1streviewfinal.pdf"
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
+    cb(null, unique + "-" + file.originalname);
   }
 });
 const fileFilter = (req, file, cb) => {
-  const allowed = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"];
+  const allowed = [
+  ".pdf",
+
+  // Word
+  ".doc",
+  ".docx",
+
+  // Images
+  ".jpg",
+  ".jpeg",
+  ".png",
+
+  // PowerPoint
+  ".ppt",
+  ".pptx",
+
+  // Excel
+  ".xls",
+  ".xlsx"
+];
   const ext = path.extname(file.originalname).toLowerCase();
-  allowed.includes(ext) ? cb(null, true) : cb(new Error("File type not supported"), false);
+  allowed.includes(ext) ? cb(null, true) : cb(new Error("File type not supported. Only PDF, Word, Excel, PPT, and Image files are allowed"), false);
 };
-const upload = multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ storage, fileFilter, limits: { fileSize: 20 * 1024 * 1024 } });
 
 // ════════════════════════════════════════
 //  ROUTES
@@ -82,7 +106,13 @@ app.post("/api/login", (req, res) => {
     if (user.role !== role) return res.status(403).json({ success: false, message: "Access denied: Incorrect role" });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ success: false, message: "Invalid password" });
-    res.json({ success: true, message: "Login successful", role: user.role, full_name: user.full_name });
+   res.json({
+  success:   true,
+  message:   "Login successful",
+  role:      user.role,
+  full_name: user.full_name,
+  username:  user.username    // ← add this
+});
   });
 });
 
@@ -91,7 +121,7 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" });
 
-    const { mode, copies, print_type, page_numbers, description, spiral_binding, total_pages } = req.body;
+    const { mode, copies, print_type, page_numbers, description, spiral_binding, total_pages, username } = req.body;
 
     if (!mode || !copies || !print_type || !total_pages) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
@@ -110,11 +140,12 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
 
     const sql = `
       INSERT INTO print_requests 
-        (file_path, mode, copies, print_type, page_numbers, description, total_pages, spiral_binding, amount)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  (file_path, original_name, mode, copies, print_type, page_numbers, description, total_pages, spiral_binding, amount, username)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
       req.file.path,
+      req.file.originalname,
       mode,
       parseInt(copies),
       print_type,
@@ -122,7 +153,8 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
       description   || null,
       tp,
       spiral_binding === "true" || spiral_binding === true ? 1 : 0,
-      finalAmount
+      finalAmount,
+      username || null 
     ];
 
     db.query(sql, values, (err, result) => {
@@ -168,7 +200,7 @@ app.post("/api/payment-confirm", (req, res) => {
 // ── Get All Print Requests (Admin) ──
 app.get("/api/admin/print-requests", (req, res) => {
   const sql = `
-    SELECT id, file_path, mode, copies, print_type, page_numbers, total_pages,
+    SELECT id, file_path, original_name, mode, copies, print_type, page_numbers, total_pages,
            spiral_binding, amount, payment_status, print_status, created_at
     FROM print_requests
     ORDER BY created_at DESC
@@ -201,7 +233,7 @@ app.put("/api/admin/print-requests/:id/status", (req, res) => {
 app.get("/api/print-requests/:id", (req, res) => {
   const { id } = req.params;
   db.query(
-    `SELECT id, mode, copies, print_type, page_numbers, total_pages,
+    `SELECT id, file_path, original_name, mode, copies, print_type, page_numbers, total_pages,
             spiral_binding, amount, payment_status, print_status, created_at
      FROM print_requests WHERE id = ?`,
     [id],
@@ -384,3 +416,23 @@ app.put("/api/admin/bookstore/orders/:id/status", (req, res) => {
 // ── Start Server ──
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// route for user's own requests
+app.get("/api/my-requests", (req, res) => {
+  const { username } = req.query;
+  if (!username) {
+    return res.status(400).json({ success: false, message: "Username required" });
+  }
+  const sql = `
+    SELECT id, file_path, original_name, mode, copies, print_type, page_numbers,
+           total_pages, spiral_binding, amount, payment_status,
+           print_status, created_at
+    FROM print_requests
+    WHERE username = ?
+    ORDER BY created_at DESC
+  `;
+  db.query(sql, [username], (err, results) => {
+    if (err) return res.status(500).json({ success: false, message: "Database error" });
+    res.json({ success: true, data: results });
+  });
+});

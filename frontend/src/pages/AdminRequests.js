@@ -102,16 +102,21 @@ export default function AdminRequests() {
                         <td><strong>PE-{String(req.id).padStart(3, '0')}</strong></td>
 
                         <td>
-                          {req.file_url ? (
-                            <a
-                              href={req.file_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={viewBtnStyle}
-                            >
-                              📄 View
-                            </a>
-                          ) : '—'}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 500, color: '#1a2e35' }}>
+                              {req.original_name || ''}
+                            </span>
+                            {req.file_url ? (
+                              <a
+                                href={req.file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={viewBtnStyle}
+                              >
+                                📄 View
+                              </a>
+                            ) : null}
+                          </div>
                         </td>
 
                         <td><TypeBadge type={req.mode} /></td>

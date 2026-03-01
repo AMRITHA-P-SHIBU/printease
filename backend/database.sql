@@ -45,14 +45,15 @@ VALUES
 USE printease;
 
 CREATE TABLE IF NOT EXISTS print_requests (
-  id          INT PRIMARY KEY AUTO_INCREMENT,
-  file_path   VARCHAR(255) NOT NULL,
-  mode        VARCHAR(50)  NOT NULL,
-  copies      INT          NOT NULL DEFAULT 1,
-  print_type  VARCHAR(50)  NOT NULL,
-  page_numbers VARCHAR(100) DEFAULT NULL,
-  description TEXT         DEFAULT NULL,
-  created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+  id             INT PRIMARY KEY AUTO_INCREMENT,
+  file_path      VARCHAR(255) NOT NULL,
+  original_name  VARCHAR(255) DEFAULT NULL,
+  mode           VARCHAR(50)  NOT NULL,
+  copies         INT          NOT NULL DEFAULT 1,
+  print_type     VARCHAR(50)  NOT NULL,
+  page_numbers   VARCHAR(100) DEFAULT NULL,
+  description    TEXT         DEFAULT NULL,
+  created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
 --cd backend, run npm install multer--
@@ -73,6 +74,7 @@ ADD COLUMN spiral_binding BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE TABLE IF NOT EXISTS print_requests (
   id             INT PRIMARY KEY AUTO_INCREMENT,
   file_path      VARCHAR(255)  NOT NULL,
+  original_name  VARCHAR(255) DEFAULT NULL,
   mode           VARCHAR(50)   NOT NULL,
   copies         INT           NOT NULL DEFAULT 1,
   print_type     VARCHAR(50)   NOT NULL,
@@ -89,8 +91,6 @@ CREATE TABLE IF NOT EXISTS print_requests (
 ALTER TABLE print_requests
 ADD COLUMN print_status VARCHAR(20) DEFAULT 'Pending';
 
-<<<<<<< HEAD
-=======
 
 --- 6th commit
 USE printease;
@@ -127,4 +127,10 @@ INSERT INTO bookstore_items (name, price, stock, icon) VALUES
   ('Observation Book', 45.00, 100, 'book-open'),
   ('Notebooks',        30.00, 200, 'notebook'),
   ('A4 Papers',       200.00,  50, 'file');
->>>>>>> 0c835ffbe32c1d8e68c4c8e23a4ab7b4a05f07fc
+
+  -- 7th commit
+  USE printease;
+ ALTER TABLE print_requests ADD COLUMN username VARCHAR(100) DEFAULT NULL;
+  
+ALTER TABLE print_requests 
+ADD COLUMN original_name VARCHAR(255) DEFAULT NULL;
