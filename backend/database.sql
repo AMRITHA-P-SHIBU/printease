@@ -88,3 +88,4 @@ CREATE TABLE IF NOT EXISTS print_requests (
 -- Also add print_status column if not already present
 ALTER TABLE print_requests
 ADD COLUMN print_status VARCHAR(20) DEFAULT 'Pending';
+
