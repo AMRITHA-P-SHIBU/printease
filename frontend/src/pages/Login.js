@@ -35,6 +35,7 @@ function Login() {
       if (res.ok && data.success) {
         localStorage.setItem("full_name", data.full_name);
         localStorage.setItem("role", data.role);
+        localStorage.setItem("username", username); // ← NEWLY ADDED
 
         if (data.role === "admin") {
           navigate("/admin/dashboard");
@@ -57,8 +58,6 @@ function Login() {
 
   return (
     <div className="login-page">
-
-      {/* ── NAVBAR ── */}
       <div className="login-navbar">
         <h2 className="login-nav-brand">PRINTEASE</h2>
         <div className="login-nav-right">
@@ -67,7 +66,6 @@ function Login() {
         </div>
       </div>
 
-      {/* ── FORM SECTION ── */}
       <div className="login-body">
         <h1 className="login-brand">
           {role === "student"
@@ -138,5 +136,3 @@ function Login() {
 }
 
 export default Login;
-
-/* append these to your existing Login.css */
