@@ -10,6 +10,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [adminType, setAdminType] = useState("printease");
 
   const roleName =
     role === "student"
@@ -38,6 +39,8 @@ function Login() {
         localStorage.setItem("username", username); // ← NEWLY ADDED
 
         if (data.role === "admin") {
+          localStorage.setItem("adminType", adminType);
+          // Assuming for now both go to the same or admin can be handled if separate paths are created
           navigate("/admin/dashboard");
         } else {
           navigate("/" + data.role + "/dashboard");
@@ -78,6 +81,26 @@ function Login() {
 
         <div className="login-card">
           <div className="role-badge">{roleName}</div>
+
+          {role === "admin" && (
+            <div className="admin-toggle-container">
+              <div className={`admin-toggle-slider ${adminType}`} />
+              <button
+                type="button"
+                className={`admin-toggle-btn ${adminType === "printease" ? "active" : ""}`}
+                onClick={() => setAdminType("printease")}
+              >
+                PrintEase
+              </button>
+              <button
+                type="button"
+                className={`admin-toggle-btn ${adminType === "bookstore" ? "active" : ""}`}
+                onClick={() => setAdminType("bookstore")}
+              >
+                Bookstore
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleLogin}>
             <div className="input-group">

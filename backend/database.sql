@@ -123,11 +123,11 @@ CREATE TABLE IF NOT EXISTS bookstore_order_items (
 );
 
 INSERT INTO bookstore_items (name, price, stock, icon) VALUES
-  ('Record Book',      50.00, 100, 'book'),
-  ('Observation Book', 45.00, 100, 'book-open'),
-  ('Notebooks',        30.00, 200, 'notebook'),
-  ('A4 Papers',       200.00,  50, 'file');
-
+  ('Record Book',      100.00, 70, 'book'),
+  ('Observation Book', 70.00, 50, 'book-open'),
+  ('Notebooks',        50.00, 100, 'notebook'),
+  ('A4 Papers',       1.00,  50, 'file');
+  
   -- 7th commit
   USE printease;
  ALTER TABLE print_requests ADD COLUMN username VARCHAR(100) DEFAULT NULL;
