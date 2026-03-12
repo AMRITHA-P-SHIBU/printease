@@ -35,7 +35,7 @@ export default function Bookstore() {
           <div className="bs-service-card" onClick={() => navigate(`/${role}/bookstore/items`)}>
             <div className="bs-service-icon">🛍️</div>
             <div className="bs-service-info">
-              <h3>Welcome to Our Store</h3>
+              <h3>Browse the Bookstore Items</h3>
               <p>Browse our available items</p>
             </div>
             <span className="bs-service-arrow">→</span>

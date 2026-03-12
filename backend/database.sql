@@ -134,3 +134,9 @@ INSERT INTO bookstore_items (name, price, stock, icon) VALUES
   
 ALTER TABLE print_requests 
 ADD COLUMN original_name VARCHAR(255) DEFAULT NULL;
+
+-- 8th commit
+-- Bookstore Previous Activity page
+-- No new tables or columns needed.
+-- Uses existing bookstore_orders + bookstore_order_items tables.
+-- Backend endpoint: GET /api/bookstore/orders/:username (already exists in index.js)
