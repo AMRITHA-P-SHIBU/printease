@@ -1,0 +1,21 @@
+// ── db.js ──
+// Place in your backend folder. Both index.js and bookstore_routes.js share this.
+// In index.js, replace your current db connection with:
+//   const db = require('./db');
+
+require('dotenv').config();
+const mysql = require('mysql2');
+
+const db = mysql.createConnection({
+  host:     process.env.DB_HOST,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
+
+db.connect((err) => {
+  if (err) console.error('Database connection failed:', err);
+  else console.log('Connected to MySQL Database');
+});
+
+module.exports = db;

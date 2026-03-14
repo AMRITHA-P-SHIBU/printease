@@ -166,6 +166,13 @@
   padding: 18px 20px;
   margin-bottom: 16px;
   background: #fafefe;
+  transition: opacity 0.3s;
+}
+
+.item-card.out-of-stock-card {
+  opacity: 0.65;
+  background: #fffafa;
+  border-color: #fee2e2;
 }
 
 .item-card-top {
@@ -252,7 +259,20 @@
   transition: background 0.2s;
 }
 
-.add-to-cart-btn:hover { background: #157d70; }
+.add-to-cart-btn:hover:not(:disabled) { background: #157d70; }
+
+.add-to-cart-btn.btn-disabled, 
+.add-to-cart-btn:disabled,
+.qty-btn:disabled,
+.qty-input:disabled {
+  background: #e5e7eb;
+  color: #9ecaed;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.add-to-cart-btn.btn-disabled, .add-to-cart-btn:disabled {
+  color: #9ca3af;
+}
 
 /* ── Cart wrapper ── */
 .bookstore-cart-wrapper {

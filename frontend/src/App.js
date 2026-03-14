@@ -21,6 +21,8 @@ import BookstorePayment from "./pages/BookstorePayment";
 import BookstoreSuccess from "./pages/BookstoreSuccess";
 import BookstoreStatus from "./pages/BookstoreStatus";
 import BookstorePreviousActivity from "./pages/BookstorePreviousActivity";
+import BookstoreAdminDashboard from './pages/BookstoreAdminDashboard';
+
 
 import "./App.css";
 
@@ -49,6 +51,7 @@ function App() {
         <Route path="/:role/bookstore/success" element={<BookstoreSuccess />} />
         <Route path="/:role/bookstore/status" element={<BookstoreStatus />} />
         <Route path="/:role/bookstore/history" element={<BookstorePreviousActivity />} />
+        <Route path="/bookstore/admin/dashboard" element={<BookstoreAdminDashboard />} />
 
       </Routes>
     </Router>

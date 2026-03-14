@@ -140,3 +140,33 @@ ADD COLUMN original_name VARCHAR(255) DEFAULT NULL;
 -- No new tables or columns needed.
 -- Uses existing bookstore_orders + bookstore_order_items tables.
 -- Backend endpoint: GET /api/bookstore/orders/:username (already exists in index.js)
+
+
+-- 9th commit
+-- bookstore_items additions
+ALTER TABLE bookstore_items
+ADD COLUMN category    VARCHAR(100) DEFAULT NULL,
+ADD COLUMN description TEXT         DEFAULT NULL,
+ADD COLUMN image_url   VARCHAR(500) DEFAULT NULL;
+
+-- bookstore_orders addition
+ALTER TABLE bookstore_orders
+ADD COLUMN full_name VARCHAR(255) DEFAULT NULL;
+
+
+INSERT INTO users (full_name, email, username, branch, year, phone, password, role)
+VALUES (
+  'Bookstore Admin',
+  'bookstore@printease.com',
+  'admin2',
+  NULL, NULL, '9898989898',
+  '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.ucrm3yc46',
+  'bookstore_admin'
+)
+ON DUPLICATE KEY UPDATE role = 'bookstore_admin';
+
+UPDATE users SET password = '$2b$10$5gc2g4a4aRBwHDglD3mEeOGgViX5gskrNhiih/t0Cw20yHpXbwcwq' WHERE username = 'admin2';
+
+-- inside backend folder like :
+-- cd backend 
+-- npm install xlsx

@@ -7,7 +7,9 @@ const bcrypt   = require("bcrypt");
 const multer   = require("multer");
 const path     = require("path");
 const fs       = require("fs");
+const XLSX     = require("xlsx");
 const { calculateAmount } = require("./calcHelper");
+const db       = require("./db");
 
 const app = express();
 app.use(cors());
@@ -18,56 +20,37 @@ const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 app.use("/uploads", express.static(uploadsDir));
 
-// ── MySQL ──
-const db = mysql.createConnection({
-  host:     process.env.DB_HOST,
-  user:     process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
-});
-db.connect((err) => {
-  if (err) {
-    console.error("Database connection failed:", err);
-  } else {
-    console.log("Connected to MySQL Database");
-  }
-});
+// ── Excel uploads folder ──
+const excelUploadsDir = path.join(__dirname, "excel_uploads");
+if (!fs.existsSync(excelUploadsDir)) fs.mkdirSync(excelUploadsDir);
 
-// ── Multer ──
+// ── Multer for documents ──
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename:    (req, file, cb) => {
-    // keep the original filename after the unique prefix so we can
-    // display it back to the user later. e.g. "1234567890-1streviewfinal.pdf"
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, unique + "-" + file.originalname);
   }
 });
 const fileFilter = (req, file, cb) => {
-  const allowed = [
-  ".pdf",
-
-  // Word
-  ".doc",
-  ".docx",
-
-  // Images
-  ".jpg",
-  ".jpeg",
-  ".png",
-
-  // PowerPoint
-  ".ppt",
-  ".pptx",
-
-  // Excel
-  ".xls",
-  ".xlsx"
-];
+  const allowed = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".ppt", ".pptx", ".xls", ".xlsx"];
   const ext = path.extname(file.originalname).toLowerCase();
-  allowed.includes(ext) ? cb(null, true) : cb(new Error("File type not supported. Only PDF, Word, Excel, PPT, and Image files are allowed"), false);
+  allowed.includes(ext) ? cb(null, true) : cb(new Error("File type not supported"), false);
 };
 const upload = multer({ storage, fileFilter, limits: { fileSize: 20 * 1024 * 1024 } });
+
+// ── Multer for Excel uploads ──
+const excelStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "excel_uploads/"),
+  filename:    (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
+});
+const excelUpload = multer({
+  storage: excelStorage,
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    [".xlsx", ".xls"].includes(ext) ? cb(null, true) : cb(new Error("Only Excel files allowed"), false);
+  }
+});
 
 // ════════════════════════════════════════
 //  ROUTES
@@ -103,16 +86,18 @@ app.post("/api/login", (req, res) => {
     if (err)             return res.status(500).json({ success: false, message: "Server error" });
     if (!results.length) return res.status(400).json({ success: false, message: "User not found" });
     const user = results[0];
-    if (user.role !== role) return res.status(403).json({ success: false, message: "Access denied: Incorrect role" });
+    if (user.role !== role) {
+      return res.status(403).json({ success: false, message: "Access denied: Incorrect role" });
+    }
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ success: false, message: "Invalid password" });
-   res.json({
-  success:   true,
-  message:   "Login successful",
-  role:      user.role,
-  full_name: user.full_name,
-  username:  user.username    // ← add this
-});
+    res.json({
+      success:   true,
+      message:   "Login successful",
+      role:      user.role,
+      full_name: user.full_name,
+      username:  user.username,
+    });
   });
 });
 
@@ -120,15 +105,11 @@ app.post("/api/login", (req, res) => {
 app.post("/api/print-request", upload.single("file"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" });
-
     const { mode, copies, print_type, page_numbers, description, spiral_binding, total_pages, username } = req.body;
-
     if (!mode || !copies || !print_type || !total_pages) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
-
     const tp = parseInt(total_pages) || 1;
-
     const finalAmount = calculateAmount({
       printType:      print_type,
       totalPages:     tp,
@@ -137,11 +118,10 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
       spiralBinding:  spiral_binding,
       mode:           mode
     });
-
     const sql = `
       INSERT INTO print_requests 
-  (file_path, original_name, mode, copies, print_type, page_numbers, description, total_pages, spiral_binding, amount, username)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (file_path, original_name, mode, copies, print_type, page_numbers, description, total_pages, spiral_binding, amount, username)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
       req.file.path,
@@ -154,9 +134,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       tp,
       spiral_binding === "true" || spiral_binding === true ? 1 : 0,
       finalAmount,
-      username || null 
+      username || null
     ];
-
     db.query(sql, values, (err, result) => {
       if (err) {
         console.error("DB Error:", err);
@@ -171,7 +150,6 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         final_amount:   finalAmount
       });
     });
-
   } catch (err) {
     console.error("Server Error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
@@ -188,10 +166,7 @@ app.post("/api/payment-confirm", (req, res) => {
     "UPDATE print_requests SET payment_status='paid', amount=? WHERE id=?",
     [amount, request_id],
     (err) => {
-      if (err) {
-        console.error("Payment confirm error:", err);
-        return res.status(500).json({ success: false, message: "Database error" });
-      }
+      if (err) return res.status(500).json({ success: false, message: "Database error" });
       res.json({ success: true, message: "Payment confirmed" });
     }
   );
@@ -247,177 +222,7 @@ app.get("/api/print-requests/:id", (req, res) => {
   );
 });
 
-// ════════════════════════════════════════
-//  BOOKSTORE ROUTES
-// ════════════════════════════════════════
-
-// ── Get all bookstore items ──
-app.get("/api/bookstore/items", (req, res) => {
-  db.query("SELECT * FROM bookstore_items ORDER BY id ASC", (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    res.json({ success: true, data: results });
-  });
-});
-
-// ── Place a bookstore order ──
-app.post("/api/bookstore/order", (req, res) => {
-  const { username, items } = req.body;
-
-  if (!username || !items || !items.length) {
-    return res.status(400).json({ success: false, message: "Missing required fields" });
-  }
-
-  const totalAmount = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-
-  db.query(
-    "INSERT INTO bookstore_orders (username, total_amount) VALUES (?, ?)",
-    [username, totalAmount],
-    (err, result) => {
-      if (err) return res.status(500).json({ success: false, message: "Database error" });
-
-      const orderId = result.insertId;
-      const orderItems = items.map(i => [orderId, i.id, i.name, i.price, i.quantity]);
-
-      db.query(
-        "INSERT INTO bookstore_order_items (order_id, item_id, item_name, price, quantity) VALUES ?",
-        [orderItems],
-        (err2) => {
-          if (err2) return res.status(500).json({ success: false, message: "Database error" });
-          res.json({
-            success: true,
-            message: "Order placed successfully",
-            order_id: orderId,
-            total_amount: totalAmount
-          });
-        }
-      );
-    }
-  );
-});
-
-// ── Get orders by username (student order history) ──
-app.get("/api/bookstore/orders/:username", (req, res) => {
-  const { username } = req.params;
-  db.query(
-    `SELECT o.id, o.total_amount, o.status, o.created_at,
-            oi.item_name, oi.price, oi.quantity
-     FROM bookstore_orders o
-     JOIN bookstore_order_items oi ON o.id = oi.order_id
-     WHERE o.username = ?
-     ORDER BY o.created_at DESC`,
-    [username],
-    (err, results) => {
-      if (err) return res.status(500).json({ success: false, message: "Database error" });
-
-      const ordersMap = {};
-      results.forEach(row => {
-        if (!ordersMap[row.id]) {
-          ordersMap[row.id] = {
-            id: row.id,
-            total_amount: row.total_amount,
-            status: row.status,
-            created_at: row.created_at,
-            items: []
-          };
-        }
-        ordersMap[row.id].items.push({
-          item_name: row.item_name,
-          price: row.price,
-          quantity: row.quantity
-        });
-      });
-
-      res.json({ success: true, data: Object.values(ordersMap) });
-    }
-  );
-});
-
-// ── Get bookstore order by ID (for token lookup) ──
-app.get("/api/bookstore/order/:id", (req, res) => {
-  const { id } = req.params;
-  db.query(
-    `SELECT o.id, o.username, o.total_amount, o.status, o.created_at,
-            oi.item_name, oi.price, oi.quantity
-     FROM bookstore_orders o
-     JOIN bookstore_order_items oi ON o.id = oi.order_id
-     WHERE o.id = ?`,
-    [id],
-    (err, results) => {
-      if (err) return res.status(500).json({ success: false, message: "Database error" });
-      if (!results.length) return res.status(404).json({ success: false, message: "Order not found" });
-
-      const order = {
-        id: results[0].id,
-        username: results[0].username,
-        total_amount: results[0].total_amount,
-        status: results[0].status,
-        created_at: results[0].created_at,
-        items: results.map(r => ({
-          item_name: r.item_name,
-          price: r.price,
-          quantity: r.quantity
-        }))
-      };
-
-      res.json({ success: true, data: order });
-    }
-  );
-});
-
-// ── Get all bookstore orders (Admin) ──
-app.get("/api/admin/bookstore/orders", (req, res) => {
-  db.query(
-    `SELECT o.id, o.username, o.total_amount, o.status, o.created_at,
-            oi.item_name, oi.price, oi.quantity
-     FROM bookstore_orders o
-     JOIN bookstore_order_items oi ON o.id = oi.order_id
-     ORDER BY o.created_at DESC`,
-    (err, results) => {
-      if (err) return res.status(500).json({ success: false, message: "Database error" });
-
-      const ordersMap = {};
-      results.forEach(row => {
-        if (!ordersMap[row.id]) {
-          ordersMap[row.id] = {
-            id: row.id,
-            username: row.username,
-            total_amount: row.total_amount,
-            status: row.status,
-            created_at: row.created_at,
-            items: []
-          };
-        }
-        ordersMap[row.id].items.push({
-          item_name: row.item_name,
-          price: row.price,
-          quantity: row.quantity
-        });
-      });
-
-      res.json({ success: true, data: Object.values(ordersMap) });
-    }
-  );
-});
-
-// ── Update bookstore order status (Admin) ──
-app.put("/api/admin/bookstore/orders/:id/status", (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-  const allowed = ["Pending", "Processing", "Completed"];
-  if (!allowed.includes(status)) {
-    return res.status(400).json({ success: false, message: "Invalid status" });
-  }
-  db.query("UPDATE bookstore_orders SET status=? WHERE id=?", [status, id], (err) => {
-    if (err) return res.status(500).json({ success: false, message: "Database error" });
-    res.json({ success: true, message: "Order status updated" });
-  });
-});
-
-// ── Start Server ──
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-// route for user's own requests
+// ── Get user's own print requests ──
 app.get("/api/my-requests", (req, res) => {
   const { username } = req.query;
   if (!username) {
@@ -425,8 +230,7 @@ app.get("/api/my-requests", (req, res) => {
   }
   const sql = `
     SELECT id, file_path, original_name, mode, copies, print_type, page_numbers,
-           total_pages, spiral_binding, amount, payment_status,
-           print_status, created_at
+           total_pages, spiral_binding, amount, payment_status, print_status, created_at
     FROM print_requests
     WHERE username = ?
     ORDER BY created_at DESC
@@ -436,3 +240,14 @@ app.get("/api/my-requests", (req, res) => {
     res.json({ success: true, data: results });
   });
 });
+
+// ════════════════════════════════════════
+// ════════════════════════════════════════
+//  BOOKSTORE ROUTES
+// ════════════════════════════════════════
+const bookstoreRoutes = require('./bookstore_routes');
+app.use('/api/bookstore', bookstoreRoutes);
+
+// ── Start Server ──
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

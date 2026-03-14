@@ -8,40 +8,44 @@ function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
   const [adminType, setAdminType] = useState("printease");
 
   const roleName =
-    role === "student"
-      ? "Student"
-      : role === "faculty"
-      ? "Faculty / Staff"
-      : "Admin";
+    role === "student" ? "Student" :
+    role === "faculty" ? "Faculty / Staff" : "Admin";
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
+    // ── Determine actual role to send to backend ──
+    let actualRole = role;
+    if (role === "admin" && adminType === "bookstore") {
+      actualRole = "bookstore_admin";
+    }
+
     try {
       const res = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role }),
+        body:    JSON.stringify({ username, password, role: actualRole }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
         localStorage.setItem("full_name", data.full_name);
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("username", username); // ← NEWLY ADDED
+        localStorage.setItem("role",      data.role);
+        localStorage.setItem("username",  data.username || username);
 
+        // ── Route based on role ──
         if (data.role === "admin") {
-          localStorage.setItem("adminType", adminType);
-          // Assuming for now both go to the same or admin can be handled if separate paths are created
           navigate("/admin/dashboard");
+        } else if (data.role === "bookstore_admin") {
+          navigate("/bookstore/admin/dashboard");
         } else {
           navigate("/" + data.role + "/dashboard");
         }
@@ -71,17 +75,15 @@ function Login() {
 
       <div className="login-body">
         <h1 className="login-brand">
-          {role === "student"
-            ? "Student Login"
-            : role === "faculty"
-            ? "Faculty/Staff Login"
-            : "Admin Login"}
+          {role === "student"  ? "Student Login"       :
+           role === "faculty"  ? "Faculty/Staff Login" : "Admin Login"}
         </h1>
         <p className="login-subtitle">Sign in to your account</p>
 
         <div className="login-card">
           <div className="role-badge">{roleName}</div>
 
+          {/* Admin type toggle — PrintEase vs Bookstore */}
           {role === "admin" && (
             <div className="admin-toggle-container">
               <div className={`admin-toggle-slider ${adminType}`} />

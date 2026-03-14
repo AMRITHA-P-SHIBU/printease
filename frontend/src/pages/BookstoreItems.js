@@ -24,21 +24,33 @@ export default function BookstoreItems() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const fetchItems = () => {
     fetch("http://localhost:5000/api/bookstore/items")
       .then(r => r.json())
       .then(data => {
         if (data.success) {
           setItems(data.data);
-          const q = {};
-          data.data.forEach(i => { q[i.id] = 0; });
-          setQuantities(q);
+          // Only initialize quantities if not already set, to avoid wiping user input
+          setQuantities(prev => {
+            const newQ = { ...prev };
+            data.data.forEach(i => {
+              if (newQ[i.id] === undefined) newQ[i.id] = 0;
+            });
+            return newQ;
+          });
         } else {
           setError("Failed to load items.");
         }
       })
       .catch(() => setError("Server error. Please try again."))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchItems();
+    // Poll every 3 seconds for real-time stock updates
+    const intervalId = setInterval(fetchItems, 3000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const updateQty = (id, delta) => {
@@ -56,21 +68,24 @@ export default function BookstoreItems() {
   const addToCart = (item) => {
     const qty = quantities[item.id] || 0;
     if (qty === 0) return alert("Please set a quantity first.");
+    if (qty > item.quantity) return alert(`Not enough stock. Only ${item.quantity} available.`);
 
     setCart(prev => {
       const exists = prev.find(c => c.id === item.id);
       let updated;
       if (exists) {
-        updated = prev.map(c => c.id === item.id ? { ...c, quantity: c.quantity + qty } : c);
+        // Enforce max stock
+        const newQty = Math.min(exists.quantity + qty, item.quantity);
+        updated = prev.map(c => c.id === item.id ? { ...c, quantity: newQty } : c);
       } else {
-        updated = [...prev, { id: item.id, name: item.name, price: item.price, quantity: qty }];
+        updated = [...prev, { id: item.id, name: item.item_name, price: item.price, quantity: qty }];
       }
       sessionStorage.setItem("bs_cart", JSON.stringify(updated));
       return updated;
     });
 
     setQuantities(prev => ({ ...prev, [item.id]: 0 }));
-    alert(`✅ ${item.name} added to cart!`);
+    alert(`✅ ${item.item_name} added to cart!`);
   };
 
   const cartCount = cart.reduce((sum, c) => sum + c.quantity, 0);
@@ -108,36 +123,57 @@ export default function BookstoreItems() {
           {loading && <div className="bs-loading">Loading items...</div>}
           {error && <div className="bs-error">{error}</div>}
 
-          {!loading && !error && items.map(item => (
-            <div key={item.id} className="item-card">
+          {!loading && !error && items.map(item => {
+            const isOutOfStock = item.quantity === 0;
+            const isLowStock = item.quantity > 0 && item.quantity <= 20;
+            return (
+            <div key={item.id} className={`item-card ${isOutOfStock ? "out-of-stock-card" : ""}`}>
               <div className="item-card-top">
-                <div className="item-icon-box">
-                  {ICON_MAP[item.icon] || "📦"}
+                <div className="item-icon-box" style={{ padding: 0, overflow: 'hidden' }}>
+                  {item.image_url ? 
+                    <img src={item.image_url} alt={item.item_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> :
+                    (ICON_MAP[item.category] || "📦")
+                  }
                 </div>
                 <div className="item-info">
-                  <h4>{item.name}</h4>
+                  <h4 style={{ margin: '0 0 4px 0' }}>{item.item_name}</h4>
                   <span className="item-price">₹{item.price}</span>
+                  <div style={{ marginTop: 8 }}>
+                    <span style={{
+                      display: 'inline-block', padding: '4px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700,
+                      background: isOutOfStock ? '#fee2e2' : isLowStock ? '#fef3c7' : '#d1fae5',
+                      color:      isOutOfStock ? '#b91c1c' : isLowStock ? '#b45309' : '#065f46',
+                    }}>
+                      {isOutOfStock ? 'Out of Stock' : isLowStock ? `Only ${item.quantity} left!` : 'In Stock'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               <div className="item-quantity-row">
                 <label>Quantity</label>
-                <button className="qty-btn" onClick={() => updateQty(item.id, -1)}>−</button>
+                <button className="qty-btn" onClick={() => updateQty(item.id, -1)} disabled={isOutOfStock}>−</button>
                 <input
                   type="number"
                   className="qty-input"
                   value={quantities[item.id] || 0}
                   onChange={e => handleQtyInput(item.id, e.target.value)}
                   min="0"
+                  max={item.quantity}
+                  disabled={isOutOfStock}
                 />
-                <button className="qty-btn" onClick={() => updateQty(item.id, 1)}>+</button>
+                <button className="qty-btn" onClick={() => updateQty(item.id, 1)} disabled={isOutOfStock || quantities[item.id] >= item.quantity}>+</button>
               </div>
 
-              <button className="add-to-cart-btn" onClick={() => addToCart(item)}>
-                🛒 Add to Cart
+              <button 
+                className={`add-to-cart-btn ${isOutOfStock ? "btn-disabled" : ""}`} 
+                onClick={() => addToCart(item)}
+                disabled={isOutOfStock}
+              >
+                {isOutOfStock ? "Out of Stock" : "🛒 Add to Cart"}
               </button>
             </div>
-          ))}
+          )})}
         </div>
       </div>
 
