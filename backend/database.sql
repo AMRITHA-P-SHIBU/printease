@@ -170,3 +170,10 @@ UPDATE users SET password = '$2b$10$5gc2g4a4aRBwHDglD3mEeOGgViX5gskrNhiih/t0Cw20
 -- inside backend folder like :
 -- cd backend 
 -- npm install xlsx
+
+--10th commit
+ALTER TABLE bookstore_items DROP COLUMN category;
+ALTER TABLE bookstore_items DROP COLUMN description;
+
+--if add item worked correctly run the following:
+select * from bookstore_items;

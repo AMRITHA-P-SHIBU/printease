@@ -127,7 +127,7 @@ function InventoryPage() {
   const [uploadMsg,   setUploadMsg]   = useState('');
   const [editItem,    setEditItem]    = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [form, setForm] = useState({ item_name: '', price: '', quantity: '', category: '', description: '', image_url: '' });
+  const [form, setForm] = useState({ item_name: '', price: '', quantity: '', image_url: '' });
 
   const fetchItems = () => {
     setLoading(true);
@@ -176,12 +176,12 @@ function InventoryPage() {
       body: JSON.stringify(form),
     });
     const data = await res.json();
-    if (data.success) { fetchItems(); setEditItem(null); setShowAddForm(false); setForm({ item_name: '', price: '', quantity: '', category: '', description: '', image_url: '' }); }
+    if (data.success) { fetchItems(); setEditItem(null); setShowAddForm(false); setForm({ item_name: '', price: '', quantity: '', image_url: '' }); }
   };
 
   const openEdit = (item) => {
     setEditItem(item);
-    setForm({ item_name: item.item_name, price: item.price, quantity: item.quantity, category: item.category || '', description: item.description || '', image_url: item.image_url || '' });
+    setForm({ item_name: item.item_name, price: item.price, quantity: item.quantity, image_url: item.image_url || '' });
     setShowAddForm(true);
   };
 
@@ -189,7 +189,7 @@ function InventoryPage() {
     <div>
       {/* Toolbar */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-        <button style={styles.btnPrimary} onClick={() => { setEditItem(null); setForm({ item_name: '', price: '', quantity: '', category: '', description: '', image_url: '' }); setShowAddForm(true); }}>
+        <button style={styles.btnPrimary} onClick={() => { setEditItem(null); setForm({ item_name: '', price: '', quantity: '', image_url: '' }); setShowAddForm(true); }}>
           + Add Item
         </button>
         <label style={styles.btnOutline}>
@@ -208,7 +208,7 @@ function InventoryPage() {
               { key: 'item_name',   label: 'Item Name *',  type: 'text'   },
               { key: 'price',       label: 'Price (₹) *',  type: 'number' },
               { key: 'quantity',    label: 'Quantity *',   type: 'number' },
-              { key: 'category',    label: 'Category',     type: 'text'   },
+              /* { key: 'category',    label: 'Category',     type: 'text'   }, */
               { key: 'image_url',   label: 'Image URL',    type: 'text'   },
             ].map(f => (
               <div key={f.key}>
@@ -221,7 +221,7 @@ function InventoryPage() {
                 />
               </div>
             ))}
-            <div style={{ gridColumn: 'span 2' }}>
+            {/*<div style={{ gridColumn: 'span 2' }}>
               <label style={styles.formLabel}>Description</label>
               <textarea
                 value={form.description}
@@ -229,7 +229,7 @@ function InventoryPage() {
                 rows={2}
                 style={{ ...styles.formInput, resize: 'vertical' }}
               />
-            </div>
+            </div>*/}
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
             <button style={styles.btnPrimary} onClick={handleSave}>{editItem ? 'Save Changes' : 'Add Item'}</button>
@@ -246,7 +246,7 @@ function InventoryPage() {
               <tr style={styles.thead}>
                 <th style={styles.th}>Image</th>
                 <th style={styles.th}>Item Name</th>
-                <th style={styles.th}>Category</th>
+                {/* <th style={styles.th}>Category</th> */}
                 <th style={styles.th}>Price</th>
                 <th style={styles.th}>Stock</th>
                 <th style={styles.th}>Status</th>
@@ -266,7 +266,7 @@ function InventoryPage() {
                     }
                   </td>
                   <td style={{ ...styles.td, fontWeight: 600 }}>{item.item_name}</td>
-                  <td style={styles.td}>{item.category || '—'}</td>
+                  {/* <td style={styles.td}>{item.category || '—'}</td> */}
                   <td style={styles.td}>₹{Number(item.price).toFixed(2)}</td>
                   <td style={styles.td}>{item.quantity}</td>
                   <td style={styles.td}>
@@ -370,7 +370,7 @@ function OrdersPage() {
                         onChange={e => updateStatus(order.id, e.target.value)}
                         style={styles.statusSelect}
                       >
-                        {['Pending','Confirmed','Ready for Pickup','Completed','Cancelled'].map(s => (
+                        {['Pending','Confirmed','Ready for Pickup','Completed'].map(s => (
                           <option key={s} value={s}>{s}</option>
                         ))}
                       </select>

@@ -59,12 +59,10 @@ router.post('/items/upload-excel', excelUpload.single('file'), (req, res) => {
       row.image_url        || row['Image URL']        || null,
       parseFloat(row.price || row['Unit Price']       || row.unit_price || 0),
       parseInt(row.quantity || row['Quantity Available'] || row.quantity_available || 0),
-      row.category         || row['Category']         || null,
-      row.description      || row['Description']      || null,
     ]);
 
     const sql = `
-      INSERT INTO bookstore_items (item_name, image_url, price, quantity, category, description)
+      INSERT INTO bookstore_items (item_name, image_url, price, quantity)
       VALUES ?
     `;
     db.query(sql, [values], (err, result) => {
@@ -80,21 +78,21 @@ router.post('/items/upload-excel', excelUpload.single('file'), (req, res) => {
 
 // POST add single item
 router.post('/items', (req, res) => {
-  const { item_name, image_url, price, quantity, category, description } = req.body;
+  const { item_name, image_url, price, quantity } = req.body;
   if (!item_name || !price) return res.status(400).json({ success: false, message: 'item_name and price are required' });
-  const sql = 'INSERT INTO bookstore_items (item_name, image_url, price, quantity, category, description) VALUES (?, ?, ?, ?, ?, ?)';
-  db.query(sql, [item_name, image_url || null, price, quantity || 0, category || null, description || null], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: 'Database error' });
+  const sql = 'INSERT INTO bookstore_items (item_name, image_url, price, quantity) VALUES (?, ?, ?, ?)';
+  db.query(sql, [item_name, image_url || null, price, quantity || 0], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: 'Database error', error: err.message });
     res.json({ success: true, message: 'Item added', id: result.insertId });
   });
 });
 
 // PUT edit item
 router.put('/items/:id', (req, res) => {
-  const { item_name, image_url, price, quantity, category, description } = req.body;
-  const sql = 'UPDATE bookstore_items SET item_name=?, image_url=?, price=?, quantity=?, category=?, description=? WHERE id=?';
-  db.query(sql, [item_name, image_url || null, price, quantity, category || null, description || null, req.params.id], (err) => {
-    if (err) return res.status(500).json({ success: false, message: 'Database error' });
+  const { item_name, image_url, price, quantity } = req.body;
+  const sql = 'UPDATE bookstore_items SET item_name=?, image_url=?, price=?, quantity=? WHERE id=?';
+  db.query(sql, [item_name, image_url || null, price, quantity, req.params.id], (err) => {
+    if (err) return res.status(500).json({ success: false, message: 'Database error', error: err.message });
     res.json({ success: true, message: 'Item updated' });
   });
 });
