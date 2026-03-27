@@ -1,0 +1,330 @@
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.report-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a2e35;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.report-subtitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2e35;
+  margin: 0;
+}
+
+/* Income Summary Cards */
+.income-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.income-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.income-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.income-card.teal {
+  border-left: 4px solid #2bb5a0;
+}
+
+.income-card.blue {
+  border-left: 4px solid #3498db;
+}
+
+.income-card.green {
+  border-left: 4px solid #27ae60;
+}
+
+.income-icon {
+  font-size: 32px;
+}
+
+.income-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.income-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.income-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a2e35;
+}
+
+/* Report Cards */
+.report-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+.report-card-header {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* Chart Section */
+.chart-container {
+  position: relative;
+  height: 320px;
+  margin: 20px 0;
+  display: flex;
+  gap: 30px;
+}
+
+.y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-right: 12px;
+  min-width: 50px;
+  font-size: 11px;
+  color: #999;
+  font-weight: 500;
+}
+
+.y-label {
+  height: 0;
+}
+
+.chart-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 8px;
+  padding-bottom: 40px;
+  border-left: 2px solid #e0e0e0;
+  border-bottom: 2px solid #e0e0e0;
+  position: relative;
+}
+
+.chart-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-bar-wrapper {
+  width: 100%;
+  height: 240px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(43, 181, 160, 0.05) 0%, rgba(43, 181, 160, 0) 100%);
+  border-radius: 8px 8px 0 0;
+  padding-bottom: 4px;
+  min-height: 20px;
+}
+
+.chart-bar {
+  width: 70%;
+  background: linear-gradient(180deg, #2bb5a0 0%, #1f9a82 100%);
+  border-radius: 6px 6px 0 0;
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.chart-bar:hover {
+  background: linear-gradient(180deg, #1f9a82 0%, #17806b 100%);
+  box-shadow: 0 4px 12px rgba(43, 181, 160, 0.3);
+}
+
+.bar-value {
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.chart-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a2e35;
+  text-align: center;
+}
+
+.chart-count {
+  font-size: 10px;
+  color: #999;
+  text-align: center;
+}
+
+/* Table Section */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.report-table thead {
+  background: #f9f9f9;
+}
+
+.report-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a2e35;
+  border-bottom: 2px solid #e0e0e0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.report-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+  color: #333;
+}
+
+.report-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.month-cell {
+  font-weight: 600;
+  color: #2bb5a0;
+}
+
+.income-cell {
+  font-weight: 700;
+  color: #1a2e35;
+}
+
+/* Messages */
+.loading-msg,
+.error-msg {
+  padding: 16px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.loading-msg {
+  background: #e8f5f2;
+  color: #2bb5a0;
+}
+
+.error-msg {
+  background: #fadcd9;
+  color: #e74c3c;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .income-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-container {
+    gap: 15px;
+  }
+
+  .chart-wrapper {
+    gap: 4px;
+    padding-bottom: 30px;
+  }
+
+  .chart-bar-wrapper {
+    height: 180px;
+  }
+
+  .chart-label {
+    font-size: 10px;
+  }
+
+  .report-title {
+    font-size: 20px;
+  }
+
+  .report-subtitle {
+    font-size: 14px;
+  }
+
+  .income-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .income-icon {
+    font-size: 24px;
+  }
+
+  .income-value {
+    font-size: 18px;
+  }
+
+  .report-table {
+    font-size: 12px;
+  }
+
+  .report-table th,
+  .report-table td {
+    padding: 10px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .report-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .report-title {
+    font-size: 18px;
+  }
+
+  .chart-wrapper {
+    gap: 2px;
+  }
+
+  .chart-bar-wrapper {
+    height: 120px;
+  }
+
+  .bar-value {
+    display: none;
+  }
+}

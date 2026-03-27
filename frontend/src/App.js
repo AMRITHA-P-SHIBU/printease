@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRequests from "./pages/AdminRequests";
+import AdminReport from "./pages/AdminReport";
 import Printout from "./pages/Printout";
 import SubmitPrintRequest from "./pages/SubmitPrintRequest";
 import PaymentPage from './pages/PaymentPage';
@@ -37,6 +38,7 @@ function App() {
         <Route path="/register/:role" element={<Register />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/requests" element={<AdminRequests />} />
+        <Route path="/admin/reports" element={<AdminReport />} />
         <Route path="/:role/dashboard" element={<Dashboard />} />
         <Route path="/:role/profile" element={<Profile />} />
         <Route path="/:role/printout" element={<Printout />} />

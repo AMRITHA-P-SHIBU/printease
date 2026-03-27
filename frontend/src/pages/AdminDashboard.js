@@ -95,9 +95,14 @@ export default function AdminDashboard() {
             <div className="section-title">Recent Print Requests</div>
             <div className="section-subtitle">Showing latest 5 requests · Update status inline</div>
           </div>
-          <button className="btn btn-outline" onClick={() => window.location.href='/admin/requests'}>
-            View All →
-          </button>
+          <div style={{display: 'flex', gap: '12px'}}>
+            <button className="btn btn-outline" onClick={() => window.location.href='/admin/reports'}>
+              📊 Reports
+            </button>
+            <button className="btn btn-outline" onClick={() => window.location.href='/admin/requests'}>
+              View All →
+            </button>
+          </div>
         </div>
 
         {loading && <p className="empty-msg">Loading requests...</p>}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // ── Sidebar links ──
@@ -6,6 +6,7 @@ const navLinks = [
   { key: 'dashboard',  label: '🏠 Dashboard'  },
   { key: 'inventory',  label: '📦 Inventory'   },
   { key: 'orders',     label: '🛒 Orders'      },
+  { key: 'reports',    label: '📊 Reports'     },
 ];
 
 export default function BookstoreAdminDashboard() {
@@ -47,6 +48,7 @@ export default function BookstoreAdminDashboard() {
             {page === 'dashboard' ? 'Dashboard'  : ''}
             {page === 'inventory' ? 'Inventory'  : ''}
             {page === 'orders'    ? 'Orders'     : ''}
+            {page === 'reports'   ? 'Reports'    : ''}
           </h2>
           <div style={styles.adminInfo}>
             <div style={styles.avatar}>B</div>
@@ -59,6 +61,7 @@ export default function BookstoreAdminDashboard() {
           {page === 'dashboard' && <DashboardPage />}
           {page === 'inventory' && <InventoryPage />}
           {page === 'orders'    && <OrdersPage    />}
+          {page === 'reports'   && <ReportsPage   />}
         </div>
       </div>
     </div>
@@ -381,6 +384,251 @@ function OrdersPage() {
             </tbody>
           </table>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════
+//  REPORTS PAGE
+// ════════════════════════════════
+function IncomeCard({ icon, value, label, color }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 16,
+      padding: '20px 24px',
+      borderRadius: '12px',
+      background: 'white',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+      borderLeft: `4px solid ${color}`,
+    }}>
+      <div style={{ fontSize: 32 }}>{icon}</div>
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#999', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{label}</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: '#1a2e35' }}>₹{value.toFixed(2)}</div>
+      </div>
+    </div>
+  );
+}
+
+function ReportsPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [dailyIncome, setDailyIncome] = useState(0);
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [annualIncome, setAnnualIncome] = useState(0);
+  const [monthlyData, setMonthlyData] = useState([]);
+
+  const calculateIncomes = useCallback((orders) => {
+    const generateMonthlyComparison = (ordersData) => {
+      const today = new Date();
+      const months = [];
+
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const month = date.getMonth();
+        const year = date.getFullYear();
+
+        const monthlyOrders = ordersData.filter(o => {
+          const orderDate = new Date(o.order_date);
+          return orderDate.getMonth() === month && orderDate.getFullYear() === year;
+        });
+
+        const income = monthlyOrders.reduce((sum, o) => sum + Number(o.total_price), 0);
+
+        months.push({
+          month: date.toLocaleString('default', { month: 'short' }),
+          fullMonth: date.toLocaleString('default', { month: 'long' }),
+          year: year,
+          income: income,
+          count: monthlyOrders.length
+        });
+      }
+
+      return months;
+    };
+
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    // Daily Income
+    const todayStr = today.toDateString();
+    const dailyOrders = orders.filter(
+      o => new Date(o.order_date).toDateString() === todayStr
+    );
+    const daily = dailyOrders.reduce((sum, o) => sum + Number(o.total_price), 0);
+    setDailyIncome(daily);
+
+    // Monthly Income
+    const monthlyOrders = orders.filter(o => {
+      const orderDate = new Date(o.order_date);
+      return (
+        orderDate.getMonth() === currentMonth &&
+        orderDate.getFullYear() === currentYear
+      );
+    });
+    const monthly = monthlyOrders.reduce((sum, o) => sum + Number(o.total_price), 0);
+    setMonthlyIncome(monthly);
+
+    // Annual Income
+    const annualOrders = orders.filter(o => {
+      const orderDate = new Date(o.order_date);
+      return orderDate.getFullYear() === currentYear;
+    });
+    const annual = annualOrders.reduce((sum, o) => sum + Number(o.total_price), 0);
+    setAnnualIncome(annual);
+
+    // Monthly Comparison
+    const monthlyComparison = generateMonthlyComparison(orders);
+    setMonthlyData(monthlyComparison);
+  }, []);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/bookstore/orders')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          calculateIncomes(d.data);
+        } else {
+          setError('Failed to load orders');
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('Could not connect to server');
+        setLoading(false);
+      });
+  }, [calculateIncomes]);
+
+  const maxIncome =
+    monthlyData.length > 0
+      ? Math.max(...monthlyData.map(m => m.income))
+      : 0;
+
+  const formatYAxisLabel = (value) => {
+    if (value === 0) return '₹0';
+    if (value >= 1000) return `₹${(value / 1000).toFixed(0)}k`;
+    return `₹${value.toFixed(0)}`;
+  };
+
+  return (
+    <div>
+      <h2 style={{ margin: '0 0 24px', fontSize: 24, fontWeight: 800, color: '#1a2e35' }}>📊 Income Report</h2>
+
+      {loading && <p style={{ color: '#999', padding: '20px', textAlign: 'center' }}>Loading report data...</p>}
+      {error && <p style={{ color: '#e53935', padding: '20px', textAlign: 'center' }}>{error}</p>}
+
+      {!loading && !error && (
+        <>
+          {/* Income Summary */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 18, marginBottom: 28 }}>
+            <IncomeCard icon="📅" value={dailyIncome} label="Today's Income" color="#2bb5a0" />
+            <IncomeCard icon="📆" value={monthlyIncome} label="This Month's Income" color="#3498db" />
+            <IncomeCard icon="📈" value={annualIncome} label="This Year's Income" color="#27ae60" />
+          </div>
+
+          {/* Chart */}
+          <div style={{ background: 'white', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', marginBottom: 24 }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#1a2e35', paddingBottom: 16, borderBottom: '2px solid #f0f0f0' }}>
+              Monthly Income Comparison (Last 12 Months)
+            </h3>
+
+            {maxIncome === 0 ? (
+              <p style={{ textAlign: 'center', padding: '40px 24px', color: '#999' }}>
+                No income data available yet. Complete some bookstore orders to see the chart.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', gap: 30, position: 'relative', height: 320 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', paddingRight: 12, minWidth: 50, fontSize: 11, color: '#999', fontWeight: 500 }}>
+                  <div>{formatYAxisLabel(maxIncome)}</div>
+                  <div>{formatYAxisLabel(maxIncome * 0.75)}</div>
+                  <div>{formatYAxisLabel(maxIncome * 0.5)}</div>
+                  <div>{formatYAxisLabel(maxIncome * 0.25)}</div>
+                  <div>₹0</div>
+                </div>
+
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8, paddingBottom: 40, borderLeft: '2px solid #e0e0e0', borderBottom: '2px solid #e0e0e0', position: 'relative' }}>
+                  {monthlyData.map((data, idx) => (
+                    <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: '100%', height: 240, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'linear-gradient(180deg, rgba(43, 181, 160, 0.05) 0%, rgba(43, 181, 160, 0) 100%)', borderRadius: '8px 8px 0 0', paddingBottom: 4, minHeight: 20 }}>
+                        <div
+                          style={{
+                            width: '70%',
+                            height: maxIncome > 0 ? `${(data.income / maxIncome) * 100}%` : '0%',
+                            background: 'linear-gradient(180deg, #2bb5a0 0%, #1f9a82 100%)',
+                            borderRadius: '6px 6px 0 0',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            justifyContent: 'center',
+                            paddingTop: 8,
+                            transition: 'all 0.3s ease',
+                            cursor: 'pointer',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(180deg, #1f9a82 0%, #17806b 100%)';
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(43, 181, 160, 0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(180deg, #2bb5a0 0%, #1f9a82 100%)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          title={`${data.fullMonth} ${data.year}: ₹${data.income.toFixed(2)}`}
+                        >
+                          {data.income > 0 && (
+                            <span style={{ fontSize: 10, fontWeight: 700, color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
+                              ₹{data.income.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#1a2e35', textAlign: 'center' }}>{data.month}</div>
+                      <div style={{ fontSize: 10, color: '#999', textAlign: 'center' }}>{data.count} orders</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Table */}
+          <div style={{ background: 'white', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#1a2e35', paddingBottom: 16, borderBottom: '2px solid #f0f0f0' }}>
+              Monthly Details
+            </h3>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f9f9f9' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#1a2e35', textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #e0e0e0' }}>Month</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#1a2e35', textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #e0e0e0' }}>Orders</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#1a2e35', textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #e0e0e0' }}>Total Income</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#1a2e35', textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '2px solid #e0e0e0' }}>Avg Per Order</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyData.map((data, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                      <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 600, color: '#2bb5a0' }}>
+                        <strong>{data.fullMonth} {data.year}</strong>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: 13, color: '#333' }}>{data.count}</td>
+                      <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 700, color: '#1a2e35' }}>
+                        ₹{data.income.toFixed(2)}
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: 13, color: '#333' }}>
+                        ₹{data.count > 0 ? (data.income / data.count).toFixed(2) : '0.00'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
