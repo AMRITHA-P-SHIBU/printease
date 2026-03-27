@@ -168,7 +168,7 @@ function Login() {
             </button>
           </form>
 
-          <p className="forgot">Forgot your password?</p>
+          {/* <p className="forgot">Forgot your password?</p> */}
 
           {role !== "admin" && (
             <p className="create">
