@@ -45,34 +45,70 @@ router.get('/items', (req, res) => {
 
 // POST upload Excel → bulk insert items
 router.post('/items/upload-excel', excelUpload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
 
   try {
-    const workbook  = XLSX.readFile(req.file.path);
-    const sheet     = workbook.Sheets[workbook.SheetNames[0]];
-    const rows      = XLSX.utils.sheet_to_json(sheet);
+    const workbook = XLSX.readFile(req.file.path);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet);
 
-    if (!rows.length) return res.status(400).json({ success: false, message: 'Excel file is empty' });
+    console.log("📄 Raw Excel Data:", rows); // DEBUG
 
-    const values = rows.map(row => [
-      row.item_name        || row['Item Name']        || 'Unknown',
-      row.image_url        || row['Image URL']        || null,
-      parseFloat(row.price || row['Unit Price']       || row.unit_price || 0),
-      parseInt(row.quantity || row['Quantity Available'] || row.quantity_available || 0),
-    ]);
+    if (!rows.length) {
+      return res.status(400).json({ success: false, message: 'Excel file is empty' });
+    }
+
+    // ✅ Clean + Map properly
+    const values = rows.map(row => {
+      const cleanRow = {};
+
+      // Remove hidden spaces from keys
+      Object.keys(row).forEach(key => {
+        cleanRow[key.trim()] = row[key];
+      });
+
+      return [
+        cleanRow["Item Name"] || 'Unknown',
+        cleanRow["Image URL"] || null,
+        Number(cleanRow["Price"] || 0),      // ✅ FIXED
+        Number(cleanRow["Quantity"] || 0)    // ✅ FIXED
+      ];
+    });
+
+    console.log("✅ Final Values:", values); // DEBUG
 
     const sql = `
       INSERT INTO bookstore_items (item_name, image_url, price, quantity)
       VALUES ?
     `;
+
     db.query(sql, [values], (err, result) => {
-      if (err) return res.status(500).json({ success: false, message: 'Database error', error: err.message });
-      // Clean up uploaded Excel file
+      if (err) {
+        console.error("❌ DB Error:", err);
+        return res.status(500).json({
+          success: false,
+          message: 'Database error',
+          error: err.message
+        });
+      }
+
+      // Delete uploaded file after processing
       fs.unlinkSync(req.file.path);
-      res.json({ success: true, message: `${result.affectedRows} items added successfully` });
+
+      res.json({
+        success: true,
+        message: `${result.affectedRows} items added successfully`
+      });
     });
+
   } catch (err) {
-    return res.status(500).json({ success: false, message: 'Failed to parse Excel file' });
+    console.error("❌ Excel Parse Error:", err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to parse Excel file'
+    });
   }
 });
 

@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AdminLayout from './AdminLayout';
 import './AdminReport.css';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { MdDownload } from 'react-icons/md';
 
 function IncomeCard({ icon, value, label, color }) {
   return (
@@ -22,6 +25,8 @@ export default function AdminReport() {
   const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [annualIncome, setAnnualIncome] = useState(0);
   const [monthlyData, setMonthlyData] = useState([]);
+  
+  const chartRef = useRef(null);
 
   const generateMonthlyComparison = (paid) => {
     const today = new Date();
@@ -119,6 +124,63 @@ export default function AdminReport() {
     return `₹${value.toFixed(0)}`;
   };
 
+  const downloadChartAsImage = async () => {
+    if (chartRef.current) {
+      try {
+        const canvas = await html2canvas(chartRef.current, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+        });
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = `income-report-${new Date().toISOString().split('T')[0]}.png`;
+        link.click();
+      } catch (err) {
+        console.error('Error downloading chart as image:', err);
+        alert('Failed to download chart as image');
+      }
+    }
+  };
+
+  const downloadChartAsPDF = async () => {
+    if (chartRef.current) {
+      try {
+        const canvas = await html2canvas(chartRef.current, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+        });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: 'a4',
+        });
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pdfWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 10;
+
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight - 20;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight - 20;
+        }
+
+        pdf.save(`income-report-${new Date().toISOString().split('T')[0]}.pdf`);
+      } catch (err) {
+        console.error('Error downloading chart as PDF:', err);
+        alert('Failed to download chart as PDF');
+      }
+    }
+  };
+
   return (
     <AdminLayout adminName="Admin">
       <div className="report-header">
@@ -159,11 +221,51 @@ export default function AdminReport() {
           </div>
 
           {/* Chart */}
-          <div className="report-card">
+          <div ref={chartRef} className="report-card">
             <div className="report-card-header">
-              <h2 className="report-subtitle">
+              <h2 className="report-subtitle" style={{ marginBottom: '16px' }}>
                 Monthly Income Comparison (Last 12 Months)
               </h2>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={downloadChartAsImage}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                  title="Download chart as PNG"
+                >
+                  <MdDownload size={16} /> Image
+                </button>
+                <button
+                  onClick={downloadChartAsPDF}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                  title="Download chart as PDF"
+                >
+                  <MdDownload size={16} /> PDF
+                </button>
+              </div>
             </div>
 
             {maxIncome === 0 ? (

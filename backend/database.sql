@@ -177,3 +177,6 @@ ALTER TABLE bookstore_items DROP COLUMN description;
 
 --if add item worked correctly run the following:
 select * from bookstore_items;
+
+--11th commit
+npm install html2canvas jspdf
