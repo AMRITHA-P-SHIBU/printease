@@ -8,6 +8,12 @@ const multer   = require("multer");
 const path     = require("path");
 const fs       = require("fs");
 const XLSX     = require("xlsx");
+const { PDFParse } = require("pdf-parse");
+const pdfParse = async (dataBuffer) => {
+  const parser = new PDFParse({ data: dataBuffer });
+  return await parser.getInfo();
+};
+const mammoth  = require("mammoth");
 const { calculateAmount } = require("./calcHelper");
 const db       = require("./db");
 
@@ -103,6 +109,113 @@ app.post("/api/login", (req, res) => {
       year:      user.year
     });
   });
+});
+
+// ── Count Pages in Document ──
+app.post("/api/count-pages", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    const filePath = req.file.path;
+    const fileType = req.file.mimetype;
+    const fileName = req.file.originalname.toLowerCase();
+    let pageCount = 1;
+
+    console.log(`\n[Page Count Request]`);
+    console.log(`File: ${fileName}`);
+    console.log(`Type: ${fileType}`);
+    console.log(`Path: ${filePath}`);
+
+    // PDF file
+    if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
+      try {
+        const pdfData = fs.readFileSync(filePath);
+        const info = await pdfParse(pdfData);
+        
+        console.log(`📄 PDF parsed successfully`);
+        console.log(`✓ Pages detected from PDF: ${info.total}`);
+        pageCount = info.total || 1;
+        
+        if (pageCount < 1) {
+          pageCount = 1;
+          console.log(`⚠ Invalid page count, defaulting to 1`);
+        }
+        
+        console.log(`✓ Final PDF pages: ${pageCount}`);
+      } catch (err) {
+        console.error("❌ PDF parsing error:", err.message);
+        pageCount = 1;
+      }
+    }
+    // Word document (.docx)
+    else if (
+      fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      fileName.endsWith(".docx")
+    ) {
+      try {
+        const result = await mammoth.extractRawText({ path: filePath });
+        const text = result.value;
+        
+        // Count based on word count - more accurate
+        const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+        // Standard: 250-300 words per page
+        pageCount = Math.max(1, Math.ceil(wordCount / 280));
+        
+        console.log(`✓ DOCX word count: ${wordCount}, pages: ${pageCount}`);
+      } catch (err) {
+        console.error("❌ Word document parsing error:", err.message);
+        try {
+          const stats = fs.statSync(filePath);
+          const fileSizeKB = stats.size / 1024;
+          pageCount = Math.max(1, Math.ceil(fileSizeKB / 50));
+          console.log(`✓ DOCX fallback (by size): ${fileSizeKB}KB → ${pageCount} pages`);
+        } catch {
+          pageCount = 1;
+        }
+      }
+    }
+    // Old Word format (.doc)
+    else if (fileType === "application/msword" || fileName.endsWith(".doc")) {
+      try {
+        const stats = fs.statSync(filePath);
+        const fileSizeKB = stats.size / 1024;
+        pageCount = Math.max(1, Math.ceil(fileSizeKB / 50));
+        console.log(`✓ DOC file size: ${fileSizeKB}KB → ${pageCount} pages`);
+      } catch (err) {
+        console.error("❌ DOC document error:", err.message);
+        pageCount = 1;
+      }
+    }
+    // Image files
+    else if (fileType && fileType.startsWith("image/")) {
+      pageCount = 1;
+      console.log(`✓ Image file → 1 page`);
+    } 
+    // Other file types
+    else {
+      pageCount = 1;
+      console.log(`ℹ Unknown file type → 1 page (default)`);
+    }
+
+    // Clean up uploaded file
+    fs.unlink(filePath, (err) => {
+      if (err) console.error("⚠ Error deleting temp file:", err.message);
+    });
+
+    console.log(`[Result] Pages: ${pageCount}\n`);
+
+    res.json({
+      success: true,
+      pages: pageCount,
+      message: `Detected ${pageCount} page${pageCount !== 1 ? "s" : ""}`
+    });
+
+  } catch (err) {
+    console.error("❌ Page counting error:", err);
+    res.status(500).json({ success: false, message: "Error counting pages" });
+  }
 });
 
 // ── Print Request ──

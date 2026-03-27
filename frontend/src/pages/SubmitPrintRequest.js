@@ -8,18 +8,50 @@ function SubmitPrintRequest() {
   const initial = fullName.charAt(0).toUpperCase();
 
   const [documentFile, setDocumentFile] = useState(null);
+  const [countedPages, setCountedPages] = useState(null);
   const [mode, setMode]                 = useState("General");
   const [copies, setCopies]             = useState(1);
   const [printType, setPrintType]       = useState("Color");
   const [spiralBinding, setSpiralBinding] = useState(false);
-  const [totalPages, setTotalPages]     = useState("");
   const [pageNumbers, setPageNumbers]   = useState("");
   const [description, setDescription]   = useState("");
   const [loading, setLoading]           = useState(false);
   const [successMsg, setSuccessMsg]     = useState("");
   const [errorMsg, setErrorMsg]         = useState("");
 
-  const handleFileChange = (e) => setDocumentFile(e.target.files[0]);
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setDocumentFile(file);
+    
+    if (file) {
+      countPagesInDocument(file);
+    }
+  };
+
+  const countPagesInDocument = async (file) => {
+    setErrorMsg(""); // Clear previous errors
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('http://localhost:5000/api/count-pages', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await res.json();
+      if (data.success && data.pages) {
+        setCountedPages(data.pages);
+      } else {
+        setErrorMsg('Could not determine page count. Please try another file.');
+        setCountedPages(null);
+      }
+    } catch (err) {
+      console.error('Error counting pages:', err);
+      setErrorMsg('Could not count pages in the document.');
+      setCountedPages(null);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -36,8 +68,8 @@ function SubmitPrintRequest() {
       return;
     }
 
-    if (!totalPages || Number(totalPages) < 1) {
-      setErrorMsg("Please enter the total number of pages.");
+    if (!countedPages || countedPages < 1) {
+      setErrorMsg("Could not determine page count. Please try uploading again.");
       return;
     }
 
@@ -50,7 +82,7 @@ function SubmitPrintRequest() {
       formData.append("copies",         copies);
       formData.append("print_type",     printType);
       formData.append("spiral_binding", spiralBinding);
-      formData.append("total_pages",    totalPages);
+      formData.append("total_pages",    countedPages);
       formData.append("page_numbers",   pageNumbers);
       formData.append("description",    description);
       formData.append("username", localStorage.getItem("username") || "");
@@ -66,13 +98,13 @@ function SubmitPrintRequest() {
 navigate("/payment", {
   state: {
     printType:     printType,
-    totalPages:    data.total_pages || totalPages,
+    totalPages:    data.total_pages || countedPages,
     colorPageInput: pageNumbers,
     copies:        copies,
     spiralBinding: spiralBinding,
     finalAmount:   data.final_amount,
     requestId:     data.request_id,
-    mode:          mode            // ← add this
+    mode:          mode
   }
 });
 } else {
@@ -191,19 +223,15 @@ navigate("/payment", {
               </label>
             </div>
 
-            {/* Total Number of Pages */}
-            <div style={styles.fieldGroup}>
-              <label style={styles.label}>Total Number of Pages <span style={styles.required}>*</span></label>
-              <input
-                type="number"
-                placeholder="e.g. 10"
-                value={totalPages}
-                min={1}
-                required
-                onChange={(e) => setTotalPages(e.target.value)}
-                style={styles.input}
-              />
-            </div>
+            {/* Total Number of Pages - Auto-counted */}
+            {countedPages && (
+              <div style={styles.fieldGroup}>
+                <label style={styles.label}>Total Number of Pages</label>
+                <div style={{ ...styles.input, background: '#e8f5f2', color: '#1f8a79', fontWeight: '600', display: 'flex', alignItems: 'center' }}>
+                  📄 {countedPages} page{countedPages !== 1 ? 's' : ''} detected
+                </div>
+              </div>
+            )}
 
             {/* Page Numbers - only for Color */}
             {isColor && (
