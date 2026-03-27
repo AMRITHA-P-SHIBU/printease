@@ -15,10 +15,20 @@ function Dashboard() {
         <div className="nav-right">
           <button className="nav-btn" onClick={() => navigate(-1)}>← Back</button>
           <button className="nav-btn" onClick={() => navigate('/')}>🏠 Home</button>
-          <div className="avatar">
+          <div 
+            className="avatar"
+            onClick={() => navigate(`/${role}/profile`)}
+            style={{ cursor: "pointer" }}
+          >
             {fullName ? fullName.charAt(0).toUpperCase() : "U"}
           </div>
-          <span className="username">{fullName}</span>
+          <span 
+            className="username"
+            onClick={() => navigate(`/${role}/profile`)}
+            style={{ cursor: "pointer" }}
+          >
+            {fullName}
+          </span>
           <span className="logout" onClick={() => { localStorage.clear(); navigate('/'); }}>
             Logout
           </span>

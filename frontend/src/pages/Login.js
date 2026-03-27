@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaUser, FaLock, FaEye } from "react-icons/fa";
+import { validateSJCETID } from "../utils/validation";
 import "./Login.css";
 
 function Login() {
@@ -11,6 +12,7 @@ function Login() {
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
   const [adminType, setAdminType] = useState("printease");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const roleName =
     role === "student" ? "Student" :
@@ -19,7 +21,19 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
     setLoading(true);
+
+    // Validate SJCET ID for students and faculty
+    if (role === "student" || role === "faculty") {
+      const sjcetValidation = validateSJCETID(username, role);
+      if (!sjcetValidation.valid) {
+        setError(sjcetValidation.message);
+        setFieldErrors({ username: sjcetValidation.message });
+        setLoading(false);
+        return;
+      }
+    }
 
     // ── Determine actual role to send to backend ──
     let actualRole = role;
@@ -40,6 +54,10 @@ function Login() {
         localStorage.setItem("full_name", data.full_name);
         localStorage.setItem("role",      data.role);
         localStorage.setItem("username",  data.username || username);
+        localStorage.setItem("email",     data.email || "");
+        localStorage.setItem("phone",     data.phone || "");
+        localStorage.setItem("branch",    data.branch || "");
+        localStorage.setItem("year",      data.year || "");
 
         // ── Route based on role ──
         if (data.role === "admin") {
@@ -111,12 +129,21 @@ function Login() {
                 <FaUser className="input-icon" />
                 <input
                   type="text"
-                  placeholder={role === "admin" ? "Enter your username" : "Enter your Sjcet Id"}
+                  placeholder={role === "admin" ? "Enter your username" : "Enter your sjcet id"}
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (fieldErrors.username) {
+                      setFieldErrors({ ...fieldErrors, username: "" });
+                    }
+                  }}
+                  className={fieldErrors.username ? "input-error" : ""}
                   required
                 />
               </div>
+              {fieldErrors.username && (
+                <span className="field-error">{fieldErrors.username}</span>
+              )}
             </div>
 
             <div className="input-group">

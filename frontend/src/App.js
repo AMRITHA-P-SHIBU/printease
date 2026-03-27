@@ -5,6 +5,7 @@ import Welcome from "./pages/Welcome";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRequests from "./pages/AdminRequests";
 import Printout from "./pages/Printout";
@@ -37,6 +38,7 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/requests" element={<AdminRequests />} />
         <Route path="/:role/dashboard" element={<Dashboard />} />
+        <Route path="/:role/profile" element={<Profile />} />
         <Route path="/:role/printout" element={<Printout />} />
         <Route path="/:role/printout/submit" element={<SubmitPrintRequest />} />
         <Route path="/payment" element={<PaymentPage />} />

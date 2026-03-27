@@ -41,12 +41,24 @@
   justify-content: center !important;
   font-weight: 700 !important;
   font-size: 15px !important;
+  transition: all 0.2s ease !important;
+}
+
+.avatar:hover {
+  background: #1f9a82 !important;
+  box-shadow: 0 4px 12px rgba(43, 181, 160, 0.3) !important;
+  transform: scale(1.05) !important;
 }
 
 .username {
   font-weight: 600 !important;
   color: #1a2e35 !important;
   font-size: 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+.username:hover {
+  color: #2bb5a0 !important;
 }
 
 .logout {

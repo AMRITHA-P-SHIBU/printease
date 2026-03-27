@@ -97,6 +97,10 @@ app.post("/api/login", (req, res) => {
       role:      user.role,
       full_name: user.full_name,
       username:  user.username,
+      email:     user.email,
+      phone:     user.phone,
+      branch:    user.branch,
+      year:      user.year
     });
   });
 });

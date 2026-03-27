@@ -150,4 +150,56 @@
 
 .admin-toggle-slider.bookstore {
   transform: translateX(100%);
-}
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper input.input-error {
+  border-color: #e74c3c !important;
+  background-color: #fadcd9 !important;
+}
+
+.input-error::placeholder {
+  color: #c0392b;
+}
+
+.field-error {
+  display: block;
+  color: #e74c3c;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 6px;
+  padding-left: 2px;
+}
+
+.input-group {
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.error-message {
+  background-color: #fadcd9;
+  border: 1px solid #e74c3c;
+  color: #c0392b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.success-message {
+  background-color: #d4edda;
+  border: 1px solid #28a745;
+  color: #155724;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 16px 0;
+}
