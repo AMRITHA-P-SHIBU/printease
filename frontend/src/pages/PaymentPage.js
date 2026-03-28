@@ -41,9 +41,27 @@ export default function PaymentPage() {
     return pages;
   };
 
-  const colorCount = printType === "Color" ? parseColorPages(colorPageInput, totalPages).size : 0;
-  const bwCount    = totalPages - colorCount;
+  let colorCount = 0;
+  let bwCount = totalPages;
+
+  if (printType === "Color") {
+    if (!colorPageInput || !colorPageInput.trim()) {
+      // Empty page numbers field = all pages are color
+      colorCount = totalPages;
+      bwCount = 0;
+    } else {
+      // Parse specified color pages
+      colorCount = parseColorPages(colorPageInput, totalPages).size;
+      bwCount = totalPages - colorCount;
+    }
+  } else {
+    // Black & White - all pages are B&W
+    colorCount = 0;
+    bwCount = totalPages;
+  }
+
   const bindingTotal = spiralBinding ? 50 * copies : 0;
+  const fastTrackTotal = mode === "Fast Track" ? 5 * totalPages * copies : 0;
 
   const handlePayNow = async () => {
     setPaying(true);
@@ -151,7 +169,10 @@ export default function PaymentPage() {
                 ? `₹50 × ${copies} cop${copies > 1 ? "ies" : "y"} = +₹${bindingTotal}`
                 : "No"
               ],
-              ...(mode === "Fast Track" ? [["Fast Track", "+₹10 (flat)"]] : []),
+              ...(mode === "Fast Track"
+                ? [["Fast Track", `₹${fastTrackTotal.toFixed(2)}`]]
+                : []
+              ),
             ].map(([key, val]) => (
               <div key={key} style={styles.breakdownRow}>
                 <span style={styles.breakdownKey}>{key}</span>

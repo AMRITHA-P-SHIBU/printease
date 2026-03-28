@@ -171,12 +171,19 @@ export const validateEmail = (email) => {
 };
 
 /**
- * Validates full name - not empty
+ * Validates full name - alphabetic only (spaces allowed)
  */
 export const validateFullName = (fullName) => {
   if (!fullName || fullName.trim() === "") {
     return { valid: false, message: "Full name is required" };
   }
-  
+
+  const trimmedName = fullName.trim();
+  const nameRegex = /^[A-Za-z ]+$/;
+
+  if (!nameRegex.test(trimmedName)) {
+    return { valid: false, message: "Full name must contain only letters and spaces" };
+  }
+
   return { valid: true, message: "" };
 };

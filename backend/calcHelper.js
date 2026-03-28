@@ -1,7 +1,6 @@
 const BW_RATE        = 1.5;
 const COLOR_RATE     = 5;
 const BINDING_COST   = 50;
-const FASTTRACK_COST = 10;
 
 function parseColorPages(input, totalPages) {
   const pages = new Set();
@@ -25,18 +24,27 @@ function parseColorPages(input, totalPages) {
 }
 
 function calculateAmount({ printType, totalPages, colorPageInput, copies, spiralBinding, mode }) {
-  const tp = parseInt(totalPages) || 1;
-  const cp = parseInt(copies)     || 1;
+  // Use auto-detected totalPages as source of truth
+  const tp = Math.max(1, Number(totalPages) || 1);
+  const cp = Math.max(1, Number(copies) || 1);
 
   let total = 0;
 
   if (printType === "Black & White") {
+    // Always black & white regardless of page numbers input
     total = BW_RATE * tp * cp;
   } else {
-    const colorPages = parseColorPages(colorPageInput, tp);
-    const colorCount = colorPages.size;
-    const bwCount    = tp - colorCount;
-    total = ((colorCount * COLOR_RATE) + (bwCount * BW_RATE)) * cp;
+    // Color printing
+    if (!colorPageInput || !colorPageInput.trim()) {
+      // Empty page numbers field = all pages are color by default
+      total = COLOR_RATE * tp * cp;
+    } else {
+      // Parse specified color pages and calculate mixed cost
+      const colorPages = parseColorPages(colorPageInput, tp);
+      const colorCount = colorPages.size;
+      const bwCount = Math.max(0, tp - colorCount);
+      total = ((colorCount * COLOR_RATE) + (bwCount * BW_RATE)) * cp;
+    }
   }
 
   // ₹50 per copy for spiral binding
@@ -44,9 +52,9 @@ function calculateAmount({ printType, totalPages, colorPageInput, copies, spiral
     total += BINDING_COST * cp;
   }
 
-  // ₹10 flat for fast track
+  // ₹5 per page for fast track
   if (mode === "Fast Track") {
-    total += FASTTRACK_COST;
+    total += 5 * tp * cp;
   }
 
   return Math.round(total * 100) / 100;
