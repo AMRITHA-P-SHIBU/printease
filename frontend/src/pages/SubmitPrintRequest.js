@@ -173,7 +173,7 @@ navigate("/payment", {
               <label style={styles.fileUploadBox}>
                 <input
                   type="file"
-                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg"
                   onChange={handleFileChange}
                   style={{ display: "none" }}
                 />

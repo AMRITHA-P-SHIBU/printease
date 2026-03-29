@@ -9,6 +9,7 @@ const path     = require("path");
 const fs       = require("fs");
 const crypto   = require("crypto");
 const XLSX     = require("xlsx");
+const AdmZip   = require("adm-zip");
 const { PDFParse } = require("pdf-parse");
 const pdfParse = async (dataBuffer) => {
   const parser = new PDFParse({ data: dataBuffer });
@@ -163,25 +164,56 @@ app.post("/api/count-pages", upload.single("file"), async (req, res) => {
       fileName.endsWith(".docx")
     ) {
       try {
-        const result = await mammoth.extractRawText({ path: filePath });
-        const text = result.value;
+        const zip = new AdmZip(filePath);
+        const docXml = zip.readAsText("word/document.xml");
         
-        // Count based on word count - more accurate
-        const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
-        // Standard: 250-300 words per page
-        pageCount = Math.max(1, Math.ceil(wordCount / 280));
+        // Count paragraphs as a more reliable page estimate
+        // Each paragraph is roughly 1-2 lines, and a page has ~30 lines
+        const paragraphs = (docXml.match(/<w:p>/g) || []).length;
         
-        console.log(`✓ DOCX word count: ${wordCount}, pages: ${pageCount}`);
+        // Count page breaks in the document
+        const pageBreaks = (docXml.match(/<w:br w:type="page"\/>/g) || []).length;
+        
+        // If explicit page breaks exist, use them as base
+        if (pageBreaks > 0) {
+          pageCount = Math.max(1, pageBreaks + 1); // +1 for content after last break
+          console.log(`✓ DOCX page breaks detected: ${pageCount} pages`);
+        } else {
+          // Estimate: paragraphs / 20 paragraphs per page (average)
+          pageCount = Math.max(1, Math.ceil(paragraphs / 20));
+          console.log(`✓ DOCX paragraphs: ${paragraphs}, estimated pages: ${pageCount}`);
+        }
       } catch (err) {
-        console.error("❌ Word document parsing error:", err.message);
+        console.error("❌ DOCX XML parsing error:", err.message);
+        // Fallback: try mammoth text extraction
         try {
-          const stats = fs.statSync(filePath);
-          const fileSizeKB = stats.size / 1024;
-          pageCount = Math.max(1, Math.ceil(fileSizeKB / 50));
-          console.log(`✓ DOCX fallback (by size): ${fileSizeKB}KB → ${pageCount} pages`);
-        } catch {
+          const result = await mammoth.extractRawText({ path: filePath });
+          let text = result.value || "";
+          text = text.replace(/\s+/g, " ").trim();
+          const words = text.split(/\s+/).filter(w => w.length > 1);
+          const wordCount = words.length;
+          pageCount = Math.max(1, Math.ceil(wordCount / 250));
+          console.log(`✓ DOCX fallback (mammoth): ${wordCount} words → ${pageCount} pages`);
+        } catch (mammothErr) {
+          console.error("❌ Mammoth fallback failed:", mammothErr.message);
           pageCount = 1;
         }
+      }
+    }
+    // PowerPoint (.pptx)
+    else if (
+      fileType === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+      fileName.endsWith(".pptx")
+    ) {
+      try {
+        const zip = new AdmZip(filePath);
+        const presentation = zip.readAsText("ppt/presentation.xml");
+        const slideMatches = presentation.match(/<p:sldId /g) || [];
+        pageCount = Math.max(1, slideMatches.length);
+        console.log(`✓ PPTX slides detected: ${pageCount}`);
+      } catch (err) {
+        console.error("❌ PPTX parsing error:", err.message);
+        pageCount = 1;
       }
     }
     // Old Word format (.doc)
@@ -189,8 +221,9 @@ app.post("/api/count-pages", upload.single("file"), async (req, res) => {
       try {
         const stats = fs.statSync(filePath);
         const fileSizeKB = stats.size / 1024;
-        pageCount = Math.max(1, Math.ceil(fileSizeKB / 50));
-        console.log(`✓ DOC file size: ${fileSizeKB}KB → ${pageCount} pages`);
+        // .doc files are less compressed - use ~40KB per page estimate
+        pageCount = Math.max(1, Math.ceil(fileSizeKB / 40));
+        console.log(`✓ DOC file size: ${fileSizeKB}KB → ${pageCount} pages (est.)`);
       } catch (err) {
         console.error("❌ DOC document error:", err.message);
         pageCount = 1;
