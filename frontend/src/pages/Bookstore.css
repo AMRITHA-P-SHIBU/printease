@@ -36,6 +36,171 @@
   gap: 18px;
 }
 
+/* ── Bookstore dashboard modern layout ── */
+.bookstore-dashboard-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ecf9f7 0%, #f8fcfd 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.bookstore-dashboard-content {
+  flex: 1;
+  margin: 0 auto;
+  width: min(1120px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 16px 60px;
+}
+
+.bookstore-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.bookstore-icon-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(43,181,160,0.2), rgba(43,181,160,0.05));
+  color: #2bb5a0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  box-shadow: 0 8px 20px rgba(43,181,160,0.2);
+}
+
+.bookstore-header h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1d3c46;
+}
+
+.bookstore-header p {
+  margin: 0;
+  font-size: 1.02rem;
+  color: #5d7f8b;
+}
+
+.bookstore-card-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.bookstore-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  animation: slideInUp 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+  text-align: left;
+  width: 100%;
+}
+
+@keyframes slideInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bookstore-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #2bb5a0 0%, #1f9a82 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.bookstore-card:hover::before {
+  transform: scaleX(1);
+}
+
+.bookstore-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border-color: rgba(43, 181, 160, 0.2);
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(43,181,160,0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.card-content h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #1f434f;
+  font-weight: 700;
+}
+
+.card-content p {
+  margin: 0;
+  color: #637a84;
+  font-size: 0.92rem;
+}
+
+.card-arrow {
+  color: #83b7b2;
+  font-size: 1.5rem;
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .bookstore-card-row {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .bookstore-card-row {
+    grid-template-columns: 1fr;
+  }
+
+  .bookstore-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .bookstore-dashboard-content {
+    padding: 24px 12px 40px;
+  }
+}
+
+
 /* ── Service cards ── */
 .bs-service-card {
   display: flex;

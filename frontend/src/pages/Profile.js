@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { FaHome, FaArrowLeft } from "react-icons/fa";
 import './Profile.css';
 
 function Profile() {
@@ -22,8 +23,22 @@ function Profile() {
       <div className="profile-navbar">
         <h2 className="profile-brand">PRINTEASE</h2>
         <div className="profile-nav-right">
-          <button className="profile-nav-btn" onClick={() => navigate(-1)}>← Back</button>
-          <button className="profile-nav-btn" onClick={() => navigate('/')}>🏠 Home</button>
+          <button 
+            className="profile-nav-icon-btn" 
+            onClick={() => navigate(-1)}
+            title="Go Back"
+            aria-label="Go back to previous page"
+          >
+            <FaArrowLeft />
+          </button>
+          <button 
+            className="profile-nav-icon-btn" 
+            onClick={() => navigate('/')}
+            title="Go Home"
+            aria-label="Go to home page"
+          >
+            <FaHome />
+          </button>
           <span className="profile-logout" onClick={() => { localStorage.clear(); navigate('/'); }}>
             Logout
           </span>

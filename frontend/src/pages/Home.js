@@ -17,7 +17,7 @@ const features = [
       </svg>
     ),
     title: 'Smart Print Requests',
-    desc: 'Upload documents, choose print settings — copies, layout, binding — and submit in seconds. No queues, no confusion.',
+    desc: 'Upload documents, choose print settings — copies, layout, binding — and submit in seconds.',
   },
   {
     icon: (
@@ -40,8 +40,8 @@ const features = [
         <circle cx="16" cy="19" r="2" fill="white"/>
       </svg>
     ),
-    title: 'Secure QR Payments',
-    desc: 'Auto-calculated costs with instant QR-based digital payment. Fully transparent.',
+    title: 'Smart & Secure Payments',
+    desc: 'Auto-calculated pricing with seamless and secure online payments.',
   },
   {
     icon: (
@@ -54,7 +54,7 @@ const features = [
       </svg>
     ),
     title: 'Bookstore & Inventory',
-    desc: 'Prebook record books and observation books before stock runs out. Get notified when items are restocked.',
+    desc: 'Prebook record books and observation books before stock runs out.',
   },
 ];
 
@@ -406,7 +406,7 @@ export default function Home() {
               You can upload documents, track print jobs, make digital payments, and prebook bookstore materials — all from one clean interface. Administrators get a powerful dashboard to manage everything in real-time.
             </p>
             <div className="about__pills">
-              <span>🖨️ Automated Printing</span>
+              <span>🖨️ Printing Module</span>
               <span>📚 Bookstore Module</span>
               <span>⚡ Fast-Track Requests</span>
               <span>🔐 Role-Based Access</span>
@@ -450,7 +450,7 @@ export default function Home() {
       <section className="cta-banner">
         <div className="cta-banner__inner">
           <h2>Ready to simplify your campus experience?</h2>
-          <p>Join students and faculty already using PrintEase.</p>
+          <p>PrintEase is all you need.</p>
           <button className="btn-primary btn-primary--large" onClick={() => navigate('/welcome')}>
             Get Started Now →
           </button>

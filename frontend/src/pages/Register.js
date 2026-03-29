@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 import {
   validateSJCETID,
   validatePhoneNumber,
@@ -157,8 +158,14 @@ function Register() {
 
   return (
     <div className="login-page">
-      <button className="back-btn" onClick={() => navigate(`/login/${role}`)}>
-        ← Back to Login
+      <button 
+        className="nav-icon-btn" 
+        onClick={() => navigate(`/login/${role}`)}
+        title="Back to Login"
+        aria-label="Go back to login page"
+        style={{ position: 'absolute', top: '20px', left: '20px' }}
+      >
+        <FaArrowLeft />
       </button>
 
       <h1 className="login-brand">PRINTEASE</h1>

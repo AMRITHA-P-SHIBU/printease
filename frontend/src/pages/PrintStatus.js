@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaHome, FaArrowLeft } from "react-icons/fa";
 import './Dashboard.css';
 
 // placeholder for server-loaded job
@@ -98,14 +99,38 @@ export default function PrintStatus() {
 
       {/* Navbar — same as Dashboard */}
       <div className="navbar">
-        <h2 className="brand">PRINTEASE</h2>
+        <div className="nav-left">
+          <button 
+            className="nav-icon-btn" 
+            onClick={() => navigate(-1)}
+            title="Go Back"
+            aria-label="Go back to previous page"
+          >
+            <FaArrowLeft />
+          </button>
+          <h2 className="brand">PRINTEASE</h2>
+        </div>
         <div className="nav-right">
-          <button className="nav-btn" onClick={() => navigate(-1)}>← Back</button>
-          <button className="nav-btn" onClick={() => navigate('/')}>Home</button>
-          <div className="avatar">
+          <button 
+            className="nav-icon-btn" 
+            onClick={() => navigate('/')}
+            title="Go Home"
+            aria-label="Go to home page"
+          >
+            <FaHome />
+          </button>
+          <div 
+            className="avatar"
+            onClick={() => navigate("/student/profile")}
+            style={{ cursor: "pointer" }}
+          >
             {fullName ? fullName.charAt(0).toUpperCase() : "U"}
           </div>
-          <span className="username">{fullName}</span>
+          <span 
+            className="username"
+            onClick={() => navigate("/student/profile")}
+            style={{ cursor: "pointer" }}
+          >{fullName}</span>
           <span className="logout" onClick={() => { localStorage.clear(); navigate('/'); }}>
             Logout
           </span>

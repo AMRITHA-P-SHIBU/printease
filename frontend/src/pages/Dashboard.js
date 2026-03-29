@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FaPrint, FaStore } from "react-icons/fa";
+import { FaPrint, FaStore, FaArrowLeft } from "react-icons/fa";
 import './Dashboard.css';
 
 function Dashboard() {
@@ -11,10 +11,18 @@ function Dashboard() {
   return (
     <div className="dashboard-wrapper">
       <div className="navbar">
-        <h2 className="brand">PRINTEASE</h2>
+        <div className="nav-left">
+          <button 
+            className="nav-icon-btn" 
+            onClick={() => navigate(-1)}
+            title="Go Back"
+            aria-label="Go back to previous page"
+          >
+            <FaArrowLeft />
+          </button>
+          <h2 className="brand">PRINTEASE</h2>
+        </div>
         <div className="nav-right">
-          <button className="nav-btn" onClick={() => navigate(-1)}>← Back</button>
-          <button className="nav-btn" onClick={() => navigate('/')}>🏠 Home</button>
           <div 
             className="avatar"
             onClick={() => navigate(`/${role}/profile`)}

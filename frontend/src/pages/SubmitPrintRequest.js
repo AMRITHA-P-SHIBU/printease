@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate} from "react-router-dom";
+import { FaHome, FaArrowLeft } from "react-icons/fa";
 
 function SubmitPrintRequest() {
   const navigate = useNavigate();
@@ -128,8 +129,22 @@ navigate("/payment", {
       <div style={styles.navbar}>
         <h2 style={styles.brand}>PRINTEASE</h2>
         <div style={styles.navRight}>
-          <button style={styles.navBtn} onClick={() => navigate(-1)}>← Back</button>
-          <button style={styles.navBtn} onClick={() => navigate("/")}>🏠 Home</button>
+          <button 
+            style={styles.navIconBtn} 
+            onClick={() => navigate(-1)}
+            title="Go Back"
+            aria-label="Go back to previous page"
+          >
+            <FaArrowLeft />
+          </button>
+          <button 
+            style={styles.navIconBtn} 
+            onClick={() => navigate("/")}
+            title="Go Home"
+            aria-label="Go to home page"
+          >
+            <FaHome />
+          </button>
           <div style={styles.avatar}>{initial}</div>
           <span style={styles.username}>{fullName}</span>
           <span style={styles.logout} onClick={handleLogout}>Logout</span>
@@ -314,6 +329,21 @@ const styles = {
     fontSize: "13px",
     fontWeight: "600",
     cursor: "pointer",
+  },
+  navIconBtn: {
+    background: "none",
+    border: "none",
+    width: "40px",
+    height: "40px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "10px",
+    fontSize: "18px",
+    color: "#1a2e35",
+    cursor: "pointer",
+    transition: "all 0.22s ease",
+    padding: 0,
   },
   avatar: {
     width: "36px",

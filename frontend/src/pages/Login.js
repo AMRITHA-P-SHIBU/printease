@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaUser, FaLock, FaEye } from "react-icons/fa";
+import { FaUser, FaLock, FaEye, FaHome, FaArrowLeft } from "react-icons/fa";
 import { validateSJCETID } from "../utils/validation";
 import "./Login.css";
 
@@ -86,8 +86,22 @@ function Login() {
       <div className="login-navbar">
         <h2 className="login-nav-brand">PRINTEASE</h2>
         <div className="login-nav-right">
-          <button className="login-nav-btn" onClick={() => navigate(-1)}>← Back</button>
-          <button className="login-nav-btn" onClick={() => navigate('/')}>🏠 Home</button>
+          <button 
+            className="login-nav-icon-btn" 
+            onClick={() => navigate(-1)}
+            title="Go Back"
+            aria-label="Go back to previous page"
+          >
+            <FaArrowLeft />
+          </button>
+          <button 
+            className="login-nav-icon-btn" 
+            onClick={() => navigate('/')}
+            title="Go Home"
+            aria-label="Go to home page"
+          >
+            <FaHome />
+          </button>
         </div>
       </div>
 

@@ -65,6 +65,32 @@
   background: #c0392b;
 }
 
+.profile-nav-icon-btn {
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 18px;
+  color: #1a2e35;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  padding: 0;
+}
+
+.profile-nav-icon-btn:hover {
+  background: rgba(43, 181, 160, 0.1);
+  color: #2bb5a0;
+  transform: scale(1.08);
+}
+
+.profile-nav-icon-btn:active {
+  transform: scale(0.95);
+}
+
 .profile-content {
   flex: 1;
   display: flex;

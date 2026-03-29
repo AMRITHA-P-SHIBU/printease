@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaUserGraduate, FaUserShield } from "react-icons/fa";
+import { FaUser, FaUserGraduate, FaUserShield, FaHome, FaArrowLeft } from "react-icons/fa";
 import './Welcome.css';
 
 function Welcome() {
@@ -13,8 +13,22 @@ function Welcome() {
       <div className="login-navbar">
         <h2 className="login-nav-brand">PRINTEASE</h2>
         <div className="login-nav-right">
-          <button className="login-nav-btn" onClick={() => navigate(-1)}>← Back</button>
-          <button className="login-nav-btn" onClick={() => navigate('/')}>🏠 Home</button>
+          <button 
+            className="login-nav-icon-btn" 
+            onClick={() => navigate(-1)}
+            title="Go Back"
+            aria-label="Go back to previous page"
+          >
+            <FaArrowLeft />
+          </button>
+          <button 
+            className="login-nav-icon-btn" 
+            onClick={() => navigate('/')}
+            title="Go Home"
+            aria-label="Go to home page"
+          >
+            <FaHome />
+          </button>
         </div>
       </div>
 
