@@ -205,23 +205,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="section-card quick-card">
-          <div className="section-header">
-            <div className="section-title">📌 Pending Payments</div>
-          </div>
-          <div className="quick-list">
-            {requests.filter(r => r.payment_status !== 'paid').length === 0
-              ? <p className="empty-msg">All payments cleared ✓</p>
-              : requests.filter(r => r.payment_status !== 'paid').slice(0,5).map(r => (
-                  <div key={r.id} className="quick-item">
-                    <span className="quick-token">PE-{String(r.id).padStart(3,'0')}</span>
-                    <span className="quick-user">{r.print_type}</span>
-                    <span className="badge badge-pending">₹{Number(r.amount).toFixed(0)}</span>
-                  </div>
-                ))
-            }
-          </div>
-        </div>
       </div>
 
       <style>{dashboardStyles}</style>
@@ -274,7 +257,7 @@ const dashboardStyles = `
   .status-select:focus { border-color: var(--teal); }
   .quick-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 18px;
   }
   .quick-list { padding: 8px 0; }

@@ -43,7 +43,6 @@ export default function Navbar() {
 
         {/* CENTER — Links */}
         <ul className={`navbar__links ${menuOpen ? 'navbar__links--open' : ''}`}>
-          <li><button onClick={() => { setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Home</button></li>
           <li><button onClick={() => scrollTo('features')}>Features</button></li>
           <li><button onClick={() => scrollTo('about')}>About</button></li>
         </ul>
