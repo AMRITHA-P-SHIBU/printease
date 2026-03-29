@@ -84,8 +84,7 @@ function Login() {
   return (
     <div className="login-page">
       <div className="login-navbar">
-        <h2 className="login-nav-brand">PRINTEASE</h2>
-        <div className="login-nav-right">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button 
             className="login-nav-icon-btn" 
             onClick={() => navigate(-1)}
@@ -94,6 +93,9 @@ function Login() {
           >
             <FaArrowLeft />
           </button>
+          <h2 className="login-nav-brand">PRINTEASE</h2>
+        </div>
+        <div className="login-nav-right">
           <button 
             className="login-nav-icon-btn" 
             onClick={() => navigate('/')}

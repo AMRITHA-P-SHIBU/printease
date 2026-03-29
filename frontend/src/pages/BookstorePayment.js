@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { FaHome, FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
 import "./Bookstore.css";
 
 export default function BookstorePayment() {
@@ -122,8 +122,7 @@ export default function BookstorePayment() {
 
       {/* ── NAVBAR ── */}
       <div style={styles.navbar}>
-        <h2 style={styles.brand}>PRINTEASE</h2>
-        <div style={styles.navRight}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button 
             style={styles.navIconBtn}
             onClick={() => navigate(-1)}
@@ -132,16 +131,17 @@ export default function BookstorePayment() {
           >
             <FaArrowLeft />
           </button>
-          <button 
-            style={styles.navIconBtn}
-            onClick={() => navigate("/")}
-            title="Go Home"
-            aria-label="Go to home page"
-          >
-            <FaHome />
-          </button>
-          <div style={styles.avatar}>{initial}</div>
-          <span style={styles.username}>{fullName}</span>
+          <h2 style={styles.brand}>PRINTEASE</h2>
+        </div>
+        <div style={styles.navRight}>
+          <div 
+            style={{ ...styles.avatar, cursor: 'pointer' }}
+            onClick={() => navigate(`/${role}/profile`)}
+          >{initial}</div>
+          <span 
+            style={{ ...styles.username, cursor: 'pointer' }}
+            onClick={() => navigate(`/${role}/profile`)}
+          >{fullName}</span>
           <span style={styles.logout} onClick={() => { localStorage.clear(); navigate("/"); }}>
             Logout
           </span>
@@ -208,7 +208,7 @@ export default function BookstorePayment() {
 const styles = {
   page:          { minHeight: "100vh", background: "#f0f4f8", fontFamily: "'Segoe UI', sans-serif", display: "flex", flexDirection: "column" },
   navbar:        { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", position: "sticky", top: 0, zIndex: 100, width: "100%", boxSizing: "border-box" },
-  brand:         { color: "#1b8a6b", fontWeight: "800", fontSize: "22px", margin: 0 },
+  brand:         { color: "#2bb5a0", fontWeight: "800", fontSize: "22px", margin: 0 },
   navRight:      { display: "flex", alignItems: "center", gap: "12px" },
   navBtn:        { background: "transparent", border: "1.5px solid #2bb5a0", color: "#2bb5a0", padding: "7px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer" },
   navIconBtn:    { background: "none", border: "none", width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "10px", fontSize: "18px", color: "#1a2e35", cursor: "pointer", transition: "all 0.22s ease", padding: 0 },

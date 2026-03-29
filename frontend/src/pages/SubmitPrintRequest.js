@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate} from "react-router-dom";
-import { FaHome, FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
 
 function SubmitPrintRequest() {
   const navigate = useNavigate();
@@ -127,8 +127,7 @@ navigate("/payment", {
 
       {/* Navbar */}
       <div style={styles.navbar}>
-        <h2 style={styles.brand}>PRINTEASE</h2>
-        <div style={styles.navRight}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button 
             style={styles.navIconBtn} 
             onClick={() => navigate(-1)}
@@ -137,16 +136,17 @@ navigate("/payment", {
           >
             <FaArrowLeft />
           </button>
-          <button 
-            style={styles.navIconBtn} 
-            onClick={() => navigate("/")}
-            title="Go Home"
-            aria-label="Go to home page"
-          >
-            <FaHome />
-          </button>
-          <div style={styles.avatar}>{initial}</div>
-          <span style={styles.username}>{fullName}</span>
+          <h2 style={styles.brand}>PRINTEASE</h2>
+        </div>
+        <div style={styles.navRight}>
+          <div 
+            style={{ ...styles.avatar, cursor: 'pointer' }}
+            onClick={() => navigate(`/${localStorage.getItem('role') || 'student'}/profile`)}
+          >{initial}</div>
+          <span 
+            style={{ ...styles.username, cursor: 'pointer' }}
+            onClick={() => navigate(`/${localStorage.getItem('role') || 'student'}/profile`)}
+          >{fullName}</span>
           <span style={styles.logout} onClick={handleLogout}>Logout</span>
         </div>
       </div>
@@ -309,7 +309,7 @@ const styles = {
     zIndex: 100,
   },
   brand: {
-    color: "#1b8a6b",
+    color: "#2bb5a0",
     fontWeight: "800",
     fontSize: "24px",
     margin: 0,

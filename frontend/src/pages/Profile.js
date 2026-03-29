@@ -21,8 +21,7 @@ function Profile() {
   return (
     <div className="profile-wrapper">
       <div className="profile-navbar">
-        <h2 className="profile-brand">PRINTEASE</h2>
-        <div className="profile-nav-right">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button 
             className="profile-nav-icon-btn" 
             onClick={() => navigate(-1)}
@@ -31,6 +30,9 @@ function Profile() {
           >
             <FaArrowLeft />
           </button>
+          <h2 className="profile-brand">PRINTEASE</h2>
+        </div>
+        <div className="profile-nav-right">
           <button 
             className="profile-nav-icon-btn" 
             onClick={() => navigate('/')}
