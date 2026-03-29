@@ -150,14 +150,6 @@ router.delete('/items/:id', (req, res) => {
   });
 });
 
-// PUT mark item out of stock
-router.put('/items/:id/out-of-stock', (req, res) => {
-  db.query('UPDATE bookstore_items SET quantity = 0 WHERE id=?', [req.params.id], (err) => {
-    if (err) return res.status(500).json({ success: false, message: 'Database error' });
-    res.json({ success: true, message: 'Item marked as out of stock' });
-  });
-});
-
 // ════════════════════════════════
 //  ORDER ROUTES
 // ════════════════════════════════

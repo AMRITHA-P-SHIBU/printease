@@ -136,6 +136,20 @@ function InventoryPage() {
   const [editItem,    setEditItem]    = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState({ item_name: '', price: '', quantity: '', image_url: '' });
+  const [imagePreview, setImagePreview] = useState('');
+  const fileInputRef = useRef(null);
+
+  const openFilePicker = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleImageFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    setImagePreview(objectUrl);
+    setForm(prev => ({ ...prev, image_url: objectUrl }));
+  };
 
   const fetchItems = () => {
     setLoading(true);
@@ -166,12 +180,6 @@ function InventoryPage() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this item?')) return;
     await fetch(`http://localhost:5000/api/bookstore/items/${id}`, { method: 'DELETE' });
-    fetchItems();
-  };
-
-  const handleMarkOutOfStock = async (id) => {
-    if (!window.confirm('Mark this item as out of stock?')) return;
-    await fetch(`http://localhost:5000/api/bookstore/items/${id}/out-of-stock`, { method: 'PUT' });
     fetchItems();
   };
 
@@ -217,7 +225,6 @@ function InventoryPage() {
               { key: 'price',       label: 'Price (₹) *',  type: 'number' },
               { key: 'quantity',    label: 'Quantity *',   type: 'number' },
               /* { key: 'category',    label: 'Category',     type: 'text'   }, */
-              { key: 'image_url',   label: 'Image URL',    type: 'text'   },
             ].map(f => (
               <div key={f.key}>
                 <label style={styles.formLabel}>{f.label}</label>
@@ -229,6 +236,38 @@ function InventoryPage() {
                 />
               </div>
             ))}
+
+            <div>
+              <label style={styles.formLabel}>Image URL</label>
+              <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                <input
+                  type="text"
+                  value={form.image_url}
+                  onChange={e => setForm(prev => ({ ...prev, image_url: e.target.value }))}
+                  style={{ ...styles.formInput, flex: 1 }}
+                  placeholder="Paste URL or select local file"
+                />
+                <button
+                  type="button"
+                  style={{ ...styles.btnOutline, padding:'10px 14px', minWidth:'auto' }}
+                  onClick={openFilePicker}
+                >
+                  +
+                </button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleImageFile}
+              />
+              {imagePreview && (
+                <div style={{ marginTop: 8 }}>
+                  <img src={imagePreview} alt="preview" style={{ width: 70, height: 70, objectFit:'cover', borderRadius:8, border:'1px solid #e5e7eb' }} />
+                </div>
+              )}
+            </div>
             {/*<div style={{ gridColumn: 'span 2' }}>
               <label style={styles.formLabel}>Description</label>
               <textarea
@@ -289,7 +328,6 @@ function InventoryPage() {
                   <td style={styles.td}>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <button style={styles.editBtn}   onClick={() => openEdit(item)}>✏️ Edit</button>
-                      {item.quantity > 0 && <button style={styles.outOfStockBtn} onClick={() => handleMarkOutOfStock(item.id)}>🚫 Zero Stock</button>}
                       <button style={styles.deleteBtn} onClick={() => handleDelete(item.id)}>🗑️ Delete</button>
                     </div>
                   </td>
