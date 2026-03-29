@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import "./Bookstore.css";
 
@@ -11,34 +11,107 @@ export default function BookstorePayment() {
 
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => setRazorpayLoaded(true);
+    script.onerror = () => setError("Failed to load payment system");
+    document.body.appendChild(script);
+  }, []);
 
   const fullName = localStorage.getItem("full_name") || "User";
   const initial = fullName.charAt(0).toUpperCase();
 
   const handlePayNow = async () => {
+    if (!razorpayLoaded) {
+      setError("Payment system is loading. Please wait...");
+      return;
+    }
     if (!cart.length) return;
     setPaying(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:5000/api/bookstore/order", {
+      // Create Razorpay order
+      const orderRes = await fetch("http://localhost:5000/api/bookstore/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, items: cart })
+        body: JSON.stringify({ amount: totalAmount, receipt: `bookstore_${username}_${Date.now()}` }),
       });
-      const data = await res.json();
-      if (data.success) {
-        sessionStorage.removeItem("bs_cart");
-        navigate(`/${role}/bookstore/success`, {
-          state: {
-            orderId: data.order_id,
-            totalAmount: data.total_amount
-          }
-        });
-      } else {
-        setError(data.message || "Order failed. Please try again.");
+      const orderData = await orderRes.json();
+      if (!orderData.success) {
+        setError("Failed to create payment order");
+        setPaying(false);
+        return;
       }
-    } catch {
-      setError("Could not connect to server.");
+
+      const options = {
+        key: "rzp_test_SWmNgZQfffPpwJ", // Your Razorpay key_id
+        amount: orderData.order.amount,
+        currency: orderData.order.currency,
+        name: "PrintEase Bookstore",
+        description: "Bookstore Order Payment",
+        order_id: orderData.order.id,
+        method: {
+          card: false,
+          netbanking: true,
+          upi: true,
+          wallet: false,
+          emi: false,
+          paylater: false,
+        },
+        notes: { username, orderRequestId: orderData.order.id },
+        retry: { enabled: true, max_count: 2 },
+        modal: {
+          escape: true,
+          ondismiss: () => setError("Payment cancelled. Please retry with UPI/Netbanking."),
+        },
+        handler: async (response) => {
+          // Payment successful, place order on backend
+          const orderRes = await fetch("http://localhost:5000/api/bookstore/order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username,
+              items: cart,
+              payment_id: response.razorpay_payment_id,
+              order_id: response.razorpay_order_id,
+              signature: response.razorpay_signature,
+            }),
+          });
+          const orderData = await orderRes.json();
+          if (orderData.success) {
+            sessionStorage.removeItem("bs_cart");
+            navigate(`/${role}/bookstore/success`, {
+              state: {
+                orderId: orderData.order_id,
+                totalAmount: orderData.total_amount
+              }
+            });
+          } else {
+            setError("Order placement failed after payment");
+          }
+        },
+        prefill: {
+          name: fullName,
+          email: localStorage.getItem("email") || "",
+        },
+        theme: {
+          color: "#2bb5a0",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (response) => {
+        const reason = response.error && response.error.description ? response.error.description : "Payment failed";
+        setError(`${reason}. Please retry with UPI/Netbanking if your card is not supported.`);
+      });
+      rzp.open();
+    } catch (err) {
+      setError("Could not initiate payment.");
     }
     setPaying(false);
   };
@@ -97,36 +170,14 @@ export default function BookstorePayment() {
             </div>
           </div>
 
-          {/* QR Code */}
-          <div style={styles.qrSection}>
-            <p style={styles.qrLabel}>Scan QR Code to Pay</p>
-            <div style={styles.qrBox}>
-              <svg width="100" height="100" viewBox="0 0 90 90" fill="none">
-                <rect width="90" height="90" rx="8" fill="#f3f4f6"/>
-                <rect x="10" y="10" width="28" height="28" rx="2" fill="none" stroke="#2bb5a0" strokeWidth="3"/>
-                <rect x="16" y="16" width="16" height="16" rx="1" fill="#2bb5a0"/>
-                <rect x="52" y="10" width="28" height="28" rx="2" fill="none" stroke="#2bb5a0" strokeWidth="3"/>
-                <rect x="58" y="16" width="16" height="16" rx="1" fill="#2bb5a0"/>
-                <rect x="10" y="52" width="28" height="28" rx="2" fill="none" stroke="#2bb5a0" strokeWidth="3"/>
-                <rect x="16" y="58" width="16" height="16" rx="1" fill="#2bb5a0"/>
-                <rect x="52" y="52" width="8" height="8" rx="1" fill="#2bb5a0"/>
-                <rect x="64" y="52" width="8" height="8" rx="1" fill="#2bb5a0"/>
-                <rect x="52" y="64" width="8" height="8" rx="1" fill="#2bb5a0"/>
-                <rect x="64" y="64" width="8" height="8" rx="1" fill="#2bb5a0"/>
-              </svg>
-              <p style={{ fontSize: "11px", color: "#8aacaa", margin: 0 }}>QR Code</p>
-            </div>
-            <p style={styles.qrHint}>Use any UPI app to scan and pay</p>
-          </div>
-
           {error && <div style={styles.errorMsg}>{error}</div>}
 
           <button
-            style={paying ? styles.payBtnDisabled : styles.payBtn}
+            style={paying || !razorpayLoaded ? styles.payBtnDisabled : styles.payBtn}
             onClick={handlePayNow}
-            disabled={paying}
+            disabled={paying || !razorpayLoaded}
           >
-            {paying ? "Processing..." : "💳 Pay Now"}
+            {paying ? "Processing..." : !razorpayLoaded ? "Loading Payment..." : "💳 Pay Now"}
           </button>
 
           <button style={styles.goBackBtn} onClick={() => navigate(-1)}>

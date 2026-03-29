@@ -7,6 +7,7 @@ const bcrypt   = require("bcrypt");
 const multer   = require("multer");
 const path     = require("path");
 const fs       = require("fs");
+const crypto   = require("crypto");
 const XLSX     = require("xlsx");
 const { PDFParse } = require("pdf-parse");
 const pdfParse = async (dataBuffer) => {
@@ -16,10 +17,17 @@ const pdfParse = async (dataBuffer) => {
 const mammoth  = require("mammoth");
 const { calculateAmount } = require("./calcHelper");
 const db       = require("./db");
+const Razorpay = require("razorpay");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ── Razorpay Instance ──
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 // ── Uploads folder ──
 const uploadsDir = path.join(__dirname, "uploads");
@@ -273,12 +281,48 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
   }
 });
 
+// ── Create Razorpay Order ──
+app.post("/api/create-razorpay-order", (req, res) => {
+  console.log("Create order endpoint hit", req.body);
+  const { amount, currency = "INR", receipt } = req.body;
+  if (!amount) return res.status(400).json({ success: false, message: "Amount required" });
+
+  const options = {
+    amount: amount * 100, // Razorpay expects amount in paisa
+    currency,
+    receipt: receipt || `receipt_${Date.now()}`,
+  };
+
+  razorpay.orders.create(options, (err, order) => {
+    if (err) {
+      console.error("Razorpay Order Creation Error:", err);
+      return res.status(500).json({ success: false, message: "Failed to create order" });
+    }
+    console.log("Order created:", order);
+    res.json({ success: true, order });
+  });
+});
+
 // ── Payment Confirm ──
 app.post("/api/payment-confirm", (req, res) => {
-  const { request_id, amount } = req.body;
+  const { request_id, amount, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
   if (!request_id || !amount) {
     return res.status(400).json({ success: false, message: "Missing request_id or amount" });
   }
+
+  // Verify Razorpay signature if provided
+  if (razorpay_payment_id && razorpay_order_id && razorpay_signature) {
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(sign.toString())
+      .digest("hex");
+
+    if (razorpay_signature !== expectedSign) {
+      return res.status(400).json({ success: false, message: "Payment verification failed" });
+    }
+  }
+
   db.query(
     "UPDATE print_requests SET payment_status='paid', amount=? WHERE id=?",
     [amount, request_id],

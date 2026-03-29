@@ -3,6 +3,7 @@
 // const bookstoreRoutes = require('./bookstore_routes');
 // app.use('/api/bookstore', bookstoreRoutes);
 
+require('dotenv').config();
 const express  = require('express');
 const router   = express.Router();
 const multer   = require('multer');
@@ -10,6 +11,14 @@ const path     = require('path');
 const fs       = require('fs');
 const XLSX     = require('xlsx');
 const db       = require('./db'); // adjust path if needed
+const Razorpay = require('razorpay');
+const crypto   = require('crypto');
+
+// ── Razorpay Instance ──
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 // ── Multer for Excel uploads ──
 const excelStorage = multer.diskStorage({
@@ -221,12 +230,45 @@ router.get('/orders/:username', (req, res) => {
   );
 });
 
+// POST create Razorpay order for bookstore
+router.post('/create-order', (req, res) => {
+  const { amount, currency = 'INR', receipt } = req.body;
+  if (!amount) return res.status(400).json({ success: false, message: 'Amount required' });
+
+  const options = {
+    amount: amount * 100, // Razorpay expects amount in paisa
+    currency,
+    receipt: receipt || `bookstore_receipt_${Date.now()}`,
+  };
+
+  razorpay.orders.create(options, (err, order) => {
+    if (err) {
+      console.error('Razorpay Order Creation Error:', err);
+      return res.status(500).json({ success: false, message: 'Failed to create order' });
+    }
+    res.json({ success: true, order });
+  });
+});
+
 // POST place order (user cart batch)
 router.post('/order', async (req, res) => {
-  const { username, full_name, items } = req.body;
+  const { username, full_name, items, payment_id, order_id, signature } = req.body;
   
   if (!username || !items || !items.length) {
     return res.status(400).json({ success: false, message: 'Missing required fields or cart is empty' });
+  }
+
+  // Verify Razorpay signature if provided
+  if (payment_id && order_id && signature) {
+    const sign = order_id + "|" + payment_id;
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(sign.toString())
+      .digest("hex");
+
+    if (signature !== expectedSign) {
+      return res.status(400).json({ success: false, message: 'Payment verification failed' });
+    }
   }
 
   try {
