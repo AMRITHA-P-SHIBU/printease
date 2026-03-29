@@ -183,7 +183,7 @@ navigate("/payment", {
                     {documentFile ? documentFile.name : "Click to choose a file"}
                   </span>
                   <span style={styles.fileSub}>
-                    {documentFile ? "" : "PDF, Word, or Image"}
+                    {documentFile ? "" : " "}
                   </span>
                 </div>
               </label>
