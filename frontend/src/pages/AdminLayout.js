@@ -71,7 +71,7 @@ export default function AdminLayout({ children, adminName = 'Admin' }) {
             <div className="admin-profile">
               <div className="admin-avatar">{adminName.charAt(0).toUpperCase()}</div>
               <div className="admin-info">
-                <span className="admin-name">{adminName}</span>
+                <span className="username" style={{ fontSize: '15px' }}>{adminName}</span>
                 <span className="admin-role">Administrator</span>
               </div>
             </div>

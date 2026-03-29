@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaHome, FaArrowLeft, FaShoppingCart, FaPlus, FaMinus } from "react-icons/fa";
+import { FaArrowLeft, FaShoppingCart, FaPlus, FaMinus } from "react-icons/fa";
 import "./Bookstore.css";
 import "./Dashboard.css";
 
@@ -426,14 +426,6 @@ export default function BookstoreItems() {
           <h2 className="brand" style={{ color: '#2bb5a0' }}>PRINTEASE</h2>
         </div>
         <div className="nav-right">
-          <button 
-            className="nav-icon-btn" 
-            onClick={() => navigate('/')}
-            title="Go Home"
-            aria-label="Go to home page"
-          >
-            <FaHome />
-          </button>
           <div 
             className="avatar"
             onClick={() => navigate(`/${role}/profile`)}

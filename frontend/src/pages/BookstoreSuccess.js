@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { FaHome, FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
+import './Dashboard.css';
 
 export default function BookstoreSuccess() {
   const navigate = useNavigate();
@@ -18,28 +19,33 @@ export default function BookstoreSuccess() {
     <div style={styles.page}>
 
       {/* ── NAVBAR ── */}
-      <div style={styles.navbar}>
-        <h2 style={styles.brand}>PRINTEASE</h2>
-        <div style={styles.navRight}>
+      <div className="navbar">
+        <div className="nav-left">
           <button 
-            style={styles.navIconBtn}
+            className="nav-icon-btn"
             onClick={() => navigate(-1)}
             title="Go Back"
             aria-label="Go back to previous page"
           >
             <FaArrowLeft />
           </button>
-          <button 
-            style={styles.navIconBtn}
-            onClick={() => navigate("/")}
-            title="Go Home"
-            aria-label="Go to home page"
+          <h2 className="brand">PRINTEASE</h2>
+        </div>
+        <div className="nav-right">
+          <div 
+            className="avatar"
+            onClick={() => navigate(`/${role}/profile`)}
+            style={{ cursor: "pointer" }}
           >
-            <FaHome />
-          </button>
-          <div style={styles.avatar}>{initial}</div>
-          <span style={styles.username}>{fullName}</span>
-          <span style={styles.logout} onClick={() => { localStorage.clear(); navigate("/"); }}>
+            {initial}
+          </div>
+          <span 
+            className="username"
+            onClick={() => navigate(`/${role}/profile`)}
+          >
+            {fullName}
+          </span>
+          <span className="logout" onClick={() => { localStorage.clear(); navigate("/"); }}>
             Logout
           </span>
         </div>

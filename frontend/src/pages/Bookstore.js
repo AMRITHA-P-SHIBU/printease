@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaArrowLeft, FaBook, FaBox, FaHistory } from "react-icons/fa";
+import { FaArrowLeft, FaBook, FaBox, FaHistory, FaHome } from "react-icons/fa";
 import "./Bookstore.css";
 import "./Dashboard.css";
 
@@ -49,6 +49,14 @@ export default function Bookstore() {
         </div>
 
         <div className="nav-right">
+          <button 
+            className="nav-icon-btn" 
+            onClick={() => navigate('/')}
+            title="Go Home"
+            aria-label="Go to home page"
+          >
+            <FaHome />
+          </button>
           <div
             className="avatar"
             onClick={() => navigate(`/${role}/profile`)}

@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaUpload, FaClipboardList, FaHistory, FaArrowLeft, FaPrint } from "react-icons/fa";
+import { FaUpload, FaClipboardList, FaHistory, FaArrowLeft, FaPrint, FaHome } from "react-icons/fa";
 import './Dashboard.css';
 
 function Printout() {
@@ -59,6 +59,14 @@ function Printout() {
         </div>
 
         <div className="nav-right">
+          <button 
+            className="nav-icon-btn" 
+            onClick={() => navigate('/')}
+            title="Go Home"
+            aria-label="Go to home page"
+          >
+            <FaHome />
+          </button>
           <div
             className="avatar"
             onClick={() => navigate(`/${role}/profile`)}

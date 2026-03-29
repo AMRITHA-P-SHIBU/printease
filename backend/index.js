@@ -339,6 +339,7 @@ app.get("/api/admin/print-requests", (req, res) => {
     SELECT id, file_path, original_name, mode, copies, print_type, page_numbers, total_pages,
            spiral_binding, amount, payment_status, print_status, created_at
     FROM print_requests
+    WHERE payment_status = 'paid'
     ORDER BY created_at DESC
   `;
   db.query(sql, (err, results) => {
@@ -368,11 +369,21 @@ app.put("/api/admin/print-requests/:id/status", (req, res) => {
 // ── Get Print Request by ID ──
 app.get("/api/print-requests/:id", (req, res) => {
   const { id } = req.params;
-  db.query(
-    `SELECT id, file_path, original_name, mode, copies, print_type, page_numbers, total_pages,
+  const { username, role } = req.query;
+
+  let sql = `SELECT id, file_path, original_name, mode, copies, print_type, page_numbers, total_pages,
             spiral_binding, amount, payment_status, print_status, created_at
-     FROM print_requests WHERE id = ?`,
-    [id],
+     FROM print_requests WHERE id = ? AND payment_status = 'paid'`;
+  let params = [id];
+
+  if (role !== "admin" && username) {
+    sql += ` AND username = ?`;
+    params.push(username);
+  }
+
+  db.query(
+    sql,
+    params,
     (err, results) => {
       if (err) return res.status(500).json({ success: false, message: "Database error" });
       if (!results.length) return res.status(404).json({ success: false, message: "Request not found" });
@@ -393,7 +404,7 @@ app.get("/api/my-requests", (req, res) => {
     SELECT id, file_path, original_name, mode, copies, print_type, page_numbers,
            total_pages, spiral_binding, amount, payment_status, print_status, created_at
     FROM print_requests
-    WHERE username = ?
+    WHERE username = ? AND payment_status = 'paid'
     ORDER BY created_at DESC
   `;
   db.query(sql, [username], (err, results) => {

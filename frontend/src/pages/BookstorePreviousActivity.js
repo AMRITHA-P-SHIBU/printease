@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaHome, FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
 import './Dashboard.css';
 
 const statusStyle = {
@@ -73,14 +73,6 @@ export default function BookstorePreviousActivity() {
           <h2 className="brand">PRINTEASE</h2>
         </div>
         <div className="nav-right">
-          <button 
-            className="nav-icon-btn" 
-            onClick={() => navigate('/')}
-            title="Go Home"
-            aria-label="Go to home page"
-          >
-            <FaHome />
-          </button>
           <div 
             className="avatar"
             onClick={() => navigate("/student/profile")}

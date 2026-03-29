@@ -186,13 +186,23 @@ router.get('/orders', (req, res) => {
 // GET bookstore order by ID (for BookstoreStatus.js)
 router.get('/order/:id', (req, res) => {
   const { id } = req.params;
-  db.query(
-    `SELECT o.id, o.username, o.total_amount, o.status, o.created_at,
+  const { username, role } = req.query;
+
+  let sql = `SELECT o.id, o.username, o.total_amount, o.status, o.created_at,
             oi.item_name, oi.price, oi.quantity
      FROM bookstore_orders o
      JOIN bookstore_order_items oi ON o.id = oi.order_id
-     WHERE o.id = ?`,
-    [id],
+     WHERE o.id = ?`;
+  let params = [id];
+
+  if (role !== "admin" && role !== "bookstore_admin" && username) {
+    sql += ` AND o.username = ?`;
+    params.push(username);
+  }
+
+  db.query(
+    sql,
+    params,
     (err, results) => {
       if (err) return res.status(500).json({ success: false, message: 'Database error' });
       if (!results.length) return res.status(404).json({ success: false, message: 'Order not found' });

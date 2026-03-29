@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaHome, FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
 import './Dashboard.css';
 
 // placeholder for server-loaded job
@@ -68,6 +68,8 @@ export default function PrintStatus() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const fullName = localStorage.getItem("full_name");
+  const username = localStorage.getItem("username");
+  const role = localStorage.getItem("role");
 
   const handleCheck = useCallback(async (overrideToken) => {
     const raw = overrideToken !== undefined ? overrideToken : token;
@@ -77,7 +79,8 @@ export default function PrintStatus() {
     setJob(null);
     const id = t.replace(/^PE-?/i, "");
     try {
-      const res = await fetch(`http://localhost:5000/api/print-requests/${id}`);
+      const qs = new URLSearchParams({ username: username || "", role: role || "" }).toString();
+      const res = await fetch(`http://localhost:5000/api/print-requests/${id}?${qs}`);
       const data = await res.json();
       if (res.ok && data.success) {
         setJob(data.data);
@@ -87,7 +90,7 @@ export default function PrintStatus() {
     } catch (err) {
       setError("Could not connect to server");
     }
-  }, [token]);
+  }, [token, role, username]);
 
   // auto-check when token is set from storage
   useEffect(() => {
@@ -111,14 +114,6 @@ export default function PrintStatus() {
           <h2 className="brand">PRINTEASE</h2>
         </div>
         <div className="nav-right">
-          <button 
-            className="nav-icon-btn" 
-            onClick={() => navigate('/')}
-            title="Go Home"
-            aria-label="Go to home page"
-          >
-            <FaHome />
-          </button>
           <div 
             className="avatar"
             onClick={() => navigate("/student/profile")}

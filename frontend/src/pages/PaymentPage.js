@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import './Dashboard.css';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -202,26 +203,33 @@ export default function PaymentPage() {
     <div style={styles.page}>
 
       {/* Navbar */}
-      <div style={styles.navbar}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div className="navbar">
+        <div className="nav-left">
           <button 
-            style={{...styles.navBtn, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center'}} 
+            className="nav-icon-btn" 
             onClick={() => navigate(-1)}
             title="Go Back"
+            aria-label="Go back to previous page"
           >
             <FaArrowLeft />
           </button>
-          <h2 style={styles.brand}>PRINTEASE</h2>
+          <h2 className="brand">PRINTEASE</h2>
         </div>
-        <div style={styles.navRight}>
+        <div className="nav-right">
           <div 
-            style={{ ...styles.avatar, cursor: 'pointer' }}
+            className="avatar"
             onClick={() => navigate(`/${role}/profile`)}
-          >{initial}</div>
+            style={{ cursor: "pointer" }}
+          >
+            {initial}
+          </div>
           <span 
-            style={{ ...styles.username, cursor: 'pointer' }}
+            className="username"
             onClick={() => navigate(`/${role}/profile`)}
-          >{fullName}</span>
+            style={{ cursor: "pointer" }}
+          >
+            {fullName}
+          </span>
         </div>
       </div>
 

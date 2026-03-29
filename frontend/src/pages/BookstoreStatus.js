@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaHome, FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
 import './Dashboard.css';
 
 const statusConfig = {
@@ -43,6 +43,8 @@ export default function BookstoreStatus() {
   const navigate = useNavigate();
 
   const fullName = localStorage.getItem("full_name") || "User";
+  const username = localStorage.getItem("username");
+  const role = localStorage.getItem("role");
 
   const [token, setToken] = useState(() => {
     const last = localStorage.getItem("last_bs_order_id");
@@ -59,7 +61,8 @@ export default function BookstoreStatus() {
     setOrder(null);
     const id = t.replace(/^BS-?/i, "");
     try {
-      const res = await fetch(`http://localhost:5000/api/bookstore/order/${id}`);
+      const qs = new URLSearchParams({ username: username || "", role: role || "" }).toString();
+      const res = await fetch(`http://localhost:5000/api/bookstore/order/${id}?${qs}`);
       const data = await res.json();
       if (res.ok && data.success) {
         setOrder(data.data);
@@ -69,7 +72,7 @@ export default function BookstoreStatus() {
     } catch {
       setError("Could not connect to server");
     }
-  }, [token]);
+  }, [token, role, username]);
 
   useEffect(() => {
     if (token) handleCheck(token);
@@ -96,14 +99,6 @@ export default function BookstoreStatus() {
           <h2 className="brand">PRINTEASE</h2>
         </div>
         <div className="nav-right">
-          <button 
-            className="nav-icon-btn" 
-            onClick={() => navigate("/")}
-            title="Go Home"
-            aria-label="Go to home page"
-          >
-            <FaHome />
-          </button>
           <div 
             className="avatar"
             onClick={() => navigate("/student/profile")}

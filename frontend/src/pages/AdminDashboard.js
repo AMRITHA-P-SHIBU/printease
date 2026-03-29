@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
+import './Dashboard.css';
 
 function StatCard({ icon, iconClass, value, label }) {
   return (
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
   const [requests, setRequests] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
+  const fullName = localStorage.getItem("full_name") || "Admin";
 
   useEffect(() => {
     fetch('http://localhost:5000/api/admin/print-requests')
@@ -73,7 +75,7 @@ export default function AdminDashboard() {
   const latest = requests.slice(0, 5);
 
   return (
-    <AdminLayout adminName="Admin">
+    <AdminLayout adminName={fullName}>
 
       <div className="welcome-banner">
         <div>

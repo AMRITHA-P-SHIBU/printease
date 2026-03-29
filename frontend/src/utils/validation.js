@@ -84,26 +84,7 @@ export const validatePhoneNumber = (phone) => {
 export const validateStudentCollegeEmail = (email, fullName, sjcetId) => {
   if (!email) return { valid: false, message: "College email is required" };
   
-  // Validate SJCET ID format
-  const sjcetValidation = validateStudentSJCETID(sjcetId);
-  if (!sjcetValidation.valid) {
-    return { valid: false, message: "Please provide a valid SJCET ID first" };
-  }
-  
-  const joinYear = parseInt(sjcetValidation.year);
-  const branch = sjcetValidation.branch.toLowerCase();
-  
-  // Calculate passout year (assuming 4-year course)
-  const passoutYear = 2000 + joinYear + 4;
-  
-  // Remove spaces from full name and convert to lowercase
-  const nameWithoutSpace = fullName.replace(/\s+/g, "").toLowerCase();
-  
-  // Expected email format: fullname+passoutyear@branch.sjcetpalai.ac.in
-  const expectedEmailPattern = `^${nameWithoutSpace}${passoutYear}@${branch}\\.sjcetpalai\\.ac\\.in$`;
-  const expectedEmailRegex = new RegExp(expectedEmailPattern, 'i');
-  
-  if (!expectedEmailRegex.test(email.toLowerCase())) {
+  if (!email.toLowerCase().endsWith("@sjcetpalai.ac.in") && !email.toLowerCase().includes(".sjcetpalai.ac.in")) {
     return {
       valid: false,
       message: "Invalid format for college mail id"
@@ -122,20 +103,7 @@ export const validateStudentCollegeEmail = (email, fullName, sjcetId) => {
 export const validateFacultyCollegeEmail = (email, fullName, sjcetId) => {
   if (!email) return { valid: false, message: "College email is required" };
   
-  // Validate SJCET ID format
-  const sjcetValidation = validateFacultySJCETID(sjcetId);
-  if (!sjcetValidation.valid) {
-    return { valid: false, message: "Please provide a valid SJCET ID first" };
-  }
-  
-  // Remove spaces from full name and convert to lowercase
-  const nameWithoutSpace = fullName.replace(/\s+/g, "").toLowerCase();
-  
-  // Expected email format: fullname@sjcetpalai.ac.in
-  const expectedEmailPattern = `^${nameWithoutSpace}@sjcetpalai\\.ac\\.in$`;
-  const expectedEmailRegex = new RegExp(expectedEmailPattern, 'i');
-  
-  if (!expectedEmailRegex.test(email.toLowerCase())) {
+  if (!email.toLowerCase().endsWith("@sjcetpalai.ac.in")) {
     return {
       valid: false,
       message: "Invalid format for college mail id"

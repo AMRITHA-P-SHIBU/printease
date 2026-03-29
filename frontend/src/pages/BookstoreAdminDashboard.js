@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { MdDownload } from 'react-icons/md';
+import './Dashboard.css';
 
 // ── Sidebar links ──
 const navLinks = [
@@ -15,6 +16,7 @@ const navLinks = [
 export default function BookstoreAdminDashboard() {
   const navigate  = useNavigate();
   const [page, setPage] = useState('dashboard');
+  const fullName = localStorage.getItem("full_name") || "Bookstore Admin";
 
   const handleLogout = () => {
     localStorage.clear();
@@ -54,8 +56,8 @@ export default function BookstoreAdminDashboard() {
             {page === 'reports'   ? 'Reports'    : ''}
           </h2>
           <div style={styles.adminInfo}>
-            <div style={styles.avatar}>B</div>
-            <span style={styles.adminName}>Bookstore Admin</span>
+            <div className="avatar" style={{width: 36, height: 36, fontSize: 15}}>{fullName.charAt(0).toUpperCase()}</div>
+            <span className="username">{fullName}</span>
           </div>
         </div>
 
