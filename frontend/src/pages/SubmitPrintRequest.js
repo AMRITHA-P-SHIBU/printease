@@ -14,6 +14,7 @@ function SubmitPrintRequest() {
   const [mode, setMode]                 = useState("General");
   const [copies, setCopies]             = useState(1);
   const [printType, setPrintType]       = useState("Color");
+  const [printLayout, setPrintLayout]   = useState("Single Side");
   const [spiralBinding, setSpiralBinding] = useState(false);
   const [pageNumbers, setPageNumbers]   = useState("");
   const [description, setDescription]   = useState("");
@@ -83,6 +84,7 @@ function SubmitPrintRequest() {
       formData.append("mode",           mode);
       formData.append("copies",         copies);
       formData.append("print_type",     printType);
+      formData.append("print_layout",   printLayout);
       formData.append("spiral_binding", spiralBinding);
       formData.append("total_pages",    countedPages);
       formData.append("page_numbers",   pageNumbers);
@@ -225,6 +227,18 @@ navigate("/payment", {
                 <select value={printType} onChange={(e) => setPrintType(e.target.value)} required style={styles.select}>
                   <option>Color</option>
                   <option>Black &amp; White</option>
+                </select>
+                <span style={styles.chevron}>▾</span>
+              </div>
+            </div>
+
+            {/* Print Layout */}
+            <div style={styles.fieldGroup}>
+              <label style={styles.label}>Print Layout <span style={styles.required}>*</span></label>
+              <div style={styles.selectWrapper}>
+                <select value={printLayout} onChange={(e) => setPrintLayout(e.target.value)} required style={styles.select}>
+                  <option>Single Side</option>
+                  <option>Double Side</option>
                 </select>
                 <span style={styles.chevron}>▾</span>
               </div>
