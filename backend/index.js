@@ -263,8 +263,8 @@ app.post("/api/count-pages", upload.single("file"), async (req, res) => {
 app.post("/api/print-request", upload.single("file"), (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" });
-    const { mode, copies, print_type, page_numbers, description, spiral_binding, total_pages, username } = req.body;
-    if (!mode || !copies || !print_type || !total_pages) {
+    const { mode, copies, print_type, print_layout, page_numbers, description, spiral_binding, total_pages, username } = req.body;
+    if (!mode || !copies || !print_type || !print_layout || !total_pages) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
     const tp = parseInt(total_pages) || 1;
@@ -278,8 +278,8 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
     });
     const sql = `
       INSERT INTO print_requests 
-        (file_path, original_name, mode, copies, print_type, page_numbers, description, total_pages, spiral_binding, amount, username)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (file_path, original_name, mode, copies, print_type, print_layout, page_numbers, description, total_pages, spiral_binding, amount, username)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
       req.file.path,
@@ -287,6 +287,7 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
       mode,
       parseInt(copies),
       print_type,
+      print_layout,
       page_numbers  || null,
       description   || null,
       tp,
@@ -305,7 +306,8 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
         request_id:     result.insertId,
         total_pages:    tp,
         spiral_binding: spiral_binding === "true" || spiral_binding === true,
-        final_amount:   finalAmount
+        final_amount:   finalAmount,
+        print_layout:   print_layout
       });
     });
   } catch (err) {
@@ -369,7 +371,7 @@ app.post("/api/payment-confirm", (req, res) => {
 // ── Get All Print Requests (Admin) ──
 app.get("/api/admin/print-requests", (req, res) => {
   const sql = `
-    SELECT id, file_path, original_name, mode, copies, print_type, page_numbers, total_pages,
+    SELECT id, file_path, original_name, mode, copies, print_type, print_layout, page_numbers, total_pages,
            spiral_binding, amount, payment_status, print_status, created_at
     FROM print_requests
     ORDER BY created_at DESC
@@ -402,7 +404,7 @@ app.put("/api/admin/print-requests/:id/status", (req, res) => {
 app.get("/api/print-requests/:id", (req, res) => {
   const { id } = req.params;
   db.query(
-    `SELECT id, file_path, original_name, mode, copies, print_type, page_numbers, total_pages,
+    `SELECT id, file_path, original_name, mode, copies, print_type, print_layout, page_numbers, total_pages,
             spiral_binding, amount, payment_status, print_status, created_at
      FROM print_requests WHERE id = ?`,
     [id],
@@ -423,7 +425,7 @@ app.get("/api/my-requests", (req, res) => {
     return res.status(400).json({ success: false, message: "Username required" });
   }
   const sql = `
-    SELECT id, file_path, original_name, mode, copies, print_type, page_numbers,
+    SELECT id, file_path, original_name, mode, copies, print_type, print_layout, page_numbers,
            total_pages, spiral_binding, amount, payment_status, print_status, created_at
     FROM print_requests
     WHERE username = ?

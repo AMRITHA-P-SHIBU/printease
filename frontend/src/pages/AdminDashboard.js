@@ -119,6 +119,7 @@ export default function AdminDashboard() {
                   <th>Document</th>
                   <th>Mode</th>
                   <th>Print Type</th>
+                  <th>Layout</th>
                   <th>Pages</th>
                   <th>Copies</th>
                   <th>Spiral</th>
@@ -152,6 +153,7 @@ export default function AdminDashboard() {
 
                     <td><TypeBadge type={req.mode} /></td>
                     <td style={{fontSize:'13px'}}>{req.print_type}</td>
+                    <td style={{fontSize:'13px'}}>{req.print_layout || 'Single Side'}</td>
                     <td>{req.total_pages}</td>
                     <td>{req.copies}</td>
                     <td>
@@ -197,7 +199,7 @@ export default function AdminDashboard() {
               : requests.filter(r => r.mode === 'Fast Track').slice(0,5).map(r => (
                   <div key={r.id} className="quick-item">
                     <span className="quick-token">PE-{String(r.id).padStart(3,'0')}</span>
-                    <span className="quick-user">{r.print_type} · {r.total_pages}pg</span>
+                    <span className="quick-user">{r.print_type} · {r.print_layout || 'Single Side'} · {r.total_pages}pg</span>
                     <StatusBadge status={r.print_status || 'Pending'} />
                   </div>
                 ))

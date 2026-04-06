@@ -68,7 +68,8 @@ ADD COLUMN payment_status VARCHAR(20) DEFAULT 'pending';
 -- ── ALTER existing table ──
 ALTER TABLE print_requests
 ADD COLUMN total_pages    INT     NOT NULL DEFAULT 1,
-ADD COLUMN spiral_binding BOOLEAN NOT NULL DEFAULT FALSE;
+ADD COLUMN spiral_binding BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN print_layout   VARCHAR(50) NOT NULL DEFAULT 'Single Side';
 
 -- ── (DONOT RUN!!!)Full updated CREATE TABLE (for reference) ──
 CREATE TABLE IF NOT EXISTS print_requests (
@@ -78,8 +79,7 @@ CREATE TABLE IF NOT EXISTS print_requests (
   mode           VARCHAR(50)   NOT NULL,
   copies         INT           NOT NULL DEFAULT 1,
   print_type     VARCHAR(50)   NOT NULL,
-  page_numbers   VARCHAR(100)  DEFAULT NULL,
-  description    TEXT          DEFAULT NULL,
+  print_layout   VARCHAR(50)   NOT NULL DEFAULT 'Single Side',
   total_pages    INT           NOT NULL DEFAULT 1,
   spiral_binding BOOLEAN       NOT NULL DEFAULT FALSE,
   amount         DECIMAL(10,2) DEFAULT 0,

@@ -84,6 +84,7 @@ export default function AdminRequests() {
                     <th>Document</th>
                     <th>Mode</th>
                     <th>Print Type</th>
+                    <th>Layout</th>
                     <th>Pages</th>
                     <th>Copies</th>
                     <th>Spiral</th>
@@ -121,6 +122,7 @@ export default function AdminRequests() {
 
                         <td><TypeBadge type={req.mode} /></td>
                         <td style={{ fontSize: '13px' }}>{req.print_type}</td>
+                        <td style={{ fontSize: '13px' }}>{req.print_layout || 'Single Side'}</td>
                         <td>{req.total_pages}</td>
                         <td>{req.copies}</td>
                         <td>
