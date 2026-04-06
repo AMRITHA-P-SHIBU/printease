@@ -159,13 +159,20 @@ router.get('/orders', (req, res) => {
   const sql = `
     SELECT 
       o.id, 
+      o.username,
       COALESCE(o.full_name, o.username) as full_name, 
+      u.id as user_id,
+      u.email,
+      u.branch,
+      u.year,
+      u.phone,
       oi.item_name, 
       oi.quantity, 
       (oi.price * oi.quantity) as total_price, 
       o.created_at as order_date,
       o.status
     FROM bookstore_orders o
+    LEFT JOIN users u ON o.username = u.username
     JOIN bookstore_order_items oi ON o.id = oi.order_id
     ORDER BY o.created_at DESC
   `;

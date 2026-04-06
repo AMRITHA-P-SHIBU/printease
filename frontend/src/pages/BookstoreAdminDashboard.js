@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { MdDownload } from 'react-icons/md';
+import UserProfileModal from '../components/UserProfileModal';
 import './Dashboard.css';
 
 // ── Sidebar links ──
@@ -347,6 +348,8 @@ function InventoryPage() {
 function OrdersPage() {
   const [orders,  setOrders]  = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showUserProfile, setShowUserProfile] = useState(false);
 
   const fetchOrders = () => {
     setLoading(true);
@@ -364,6 +367,11 @@ function OrdersPage() {
       body:    JSON.stringify({ status }),
     });
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  };
+
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+    setShowUserProfile(true);
   };
 
   const statusColors = {
@@ -400,7 +408,23 @@ function OrdersPage() {
                 return (
                   <tr key={order.id} style={styles.tr}>
                     <td style={{ ...styles.td, fontWeight: 700 }}>BS-{String(order.id).padStart(3,'0')}</td>
-                    <td style={styles.td}>{order.full_name}</td>
+                    <td style={styles.td}>
+                      <button
+                        onClick={() => handleUserClick(order)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#2bb5a0',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          padding: 0,
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        {order.username || '—'}
+                      </button>
+                    </td>
                     <td style={styles.td}>{order.item_name}</td>
                     <td style={styles.td}>{order.quantity}</td>
                     <td style={styles.td}><strong>₹{Number(order.total_price).toFixed(2)}</strong></td>
@@ -428,6 +452,7 @@ function OrdersPage() {
           </table>
         </div>
       )}
+      <UserProfileModal user={selectedUser} isOpen={showUserProfile} onClose={() => setShowUserProfile(false)} />
     </div>
   );
 }

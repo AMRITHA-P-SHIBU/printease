@@ -371,10 +371,13 @@ app.post("/api/payment-confirm", (req, res) => {
 // ── Get All Print Requests (Admin) ──
 app.get("/api/admin/print-requests", (req, res) => {
   const sql = `
-    SELECT id, file_path, original_name, mode, copies, print_type, print_layout, page_numbers, total_pages,
-           spiral_binding, amount, payment_status, print_status, created_at
-    FROM print_requests
-    ORDER BY created_at DESC
+    SELECT pr.id, pr.file_path, pr.original_name, pr.mode, pr.copies, pr.print_type, pr.print_layout, 
+           pr.page_numbers, pr.total_pages, pr.spiral_binding, pr.amount, pr.payment_status, pr.print_status, 
+           pr.created_at, pr.username,
+           u.id as user_id, u.full_name, u.email, u.branch, u.year, u.phone
+    FROM print_requests pr
+    LEFT JOIN users u ON pr.username = u.username
+    ORDER BY pr.created_at DESC
   `;
   db.query(sql, (err, results) => {
     if (err) return res.status(500).json({ success: false, message: "Database error" });

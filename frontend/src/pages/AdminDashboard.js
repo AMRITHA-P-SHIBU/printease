@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
+import UserProfileModal from '../components/UserProfileModal';
 import './Dashboard.css';
 
 function StatCard({ icon, iconClass, value, label }) {
@@ -34,6 +35,8 @@ export default function AdminDashboard() {
   const [requests, setRequests] = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showUserProfile, setShowUserProfile] = useState(false);
   const fullName = localStorage.getItem("full_name") || "Admin";
 
   useEffect(() => {
@@ -61,6 +64,11 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error('Status update failed:', err);
     }
+  };
+
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+    setShowUserProfile(true);
   };
 
   const today     = new Date().toDateString();
@@ -116,6 +124,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr>
                   <th>#</th>
+                  <th>User</th>
                   <th>Document</th>
                   <th>Mode</th>
                   <th>Print Type</th>
@@ -131,11 +140,30 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {latest.length === 0 && (
-                  <tr><td colSpan="11" className="empty-msg">No requests yet</td></tr>
+                  <tr><td colSpan="13" className="empty-msg">No requests yet</td></tr>
                 )}
                 {latest.map((req) => (
                   <tr key={req.id}>
                     <td><strong>PE-{String(req.id).padStart(3,'0')}</strong></td>
+
+                    {/* ── User Info ── */}
+                    <td>
+                      <button
+                        onClick={() => handleUserClick(req)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#2bb5a0',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          padding: 0,
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        {req.username || '—'}
+                      </button>
+                    </td>
 
                     {/* ── Document View Button ── */}
                     <td>
@@ -210,6 +238,7 @@ export default function AdminDashboard() {
       </div>
 
       <style>{dashboardStyles}</style>
+      <UserProfileModal user={selectedUser} isOpen={showUserProfile} onClose={() => setShowUserProfile(false)} />
     </AdminLayout>
   );
 }
