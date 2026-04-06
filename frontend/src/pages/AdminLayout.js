@@ -5,6 +5,7 @@ import './AdminLayout.css';
 const navItems = [
   { path: '/admin/dashboard', label: 'Dashboard', icon: '▦' },
   { path: '/admin/requests', label: 'Print Requests', icon: '🖨' },
+  { path: '/admin/users', label: 'Users', icon: '👥' },
   { path: '/admin/reports', label: 'Reports', icon: '📊' },
 ];
 

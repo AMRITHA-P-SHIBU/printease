@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { MdDownload } from 'react-icons/md';
+import * as XLSX from 'xlsx';
 import UserProfileModal from '../components/UserProfileModal';
 import './Dashboard.css';
 
@@ -11,6 +12,7 @@ const navLinks = [
   { key: 'dashboard',  label: '🏠 Dashboard'  },
   { key: 'inventory',  label: '📦 Inventory'   },
   { key: 'orders',     label: '🛒 Orders'      },
+  { key: 'users',      label: '👥 Users'       },
   { key: 'reports',    label: '📊 Reports'     },
 ];
 
@@ -54,6 +56,7 @@ export default function BookstoreAdminDashboard() {
             {page === 'dashboard' ? 'Dashboard'  : ''}
             {page === 'inventory' ? 'Inventory'  : ''}
             {page === 'orders'    ? 'Orders'     : ''}
+            {page === 'users'     ? 'Users'      : ''}
             {page === 'reports'   ? 'Reports'    : ''}
           </h2>
           <div style={styles.adminInfo}>
@@ -67,6 +70,7 @@ export default function BookstoreAdminDashboard() {
           {page === 'dashboard' && <DashboardPage />}
           {page === 'inventory' && <InventoryPage />}
           {page === 'orders'    && <OrdersPage    />}
+          {page === 'users'     && <UsersPage     />}
           {page === 'reports'   && <ReportsPage   />}
         </div>
       </div>
@@ -178,6 +182,17 @@ function InventoryPage() {
     e.target.value = '';
   };
 
+  const downloadFormat = () => {
+    const data = [
+      ['Item Name', 'Price', 'Quantity', 'Image URL'],
+      ['Sample Item', 100, 10, 'https://example.com/image.jpg']
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Items');
+    XLSX.writeFile(wb, 'item_format.xlsx');
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this item?')) return;
     await fetch(`http://localhost:5000/api/bookstore/items/${id}`, { method: 'DELETE' });
@@ -213,6 +228,9 @@ function InventoryPage() {
           {uploading ? 'Uploading...' : '📊 Upload Excel'}
           <input type="file" accept=".xlsx,.xls" onChange={handleExcelUpload} style={{ display: 'none' }} />
         </label>
+        <button style={styles.btnOutline} onClick={downloadFormat}>
+          📄 Format
+        </button>
         {uploadMsg && <span style={{ fontSize: 13, color: uploadMsg.includes('success') || uploadMsg.includes('added') ? '#10b981' : '#e53935', fontWeight: 600 }}>{uploadMsg}</span>}
       </div>
 
@@ -452,6 +470,122 @@ function OrdersPage() {
           </table>
         </div>
       )}
+      <UserProfileModal user={selectedUser} isOpen={showUserProfile} onClose={() => setShowUserProfile(false)} />
+    </div>
+  );
+}
+
+function UsersPage() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/bookstore/users')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setUsers(data.data);
+        else setError('Failed to load users');
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('Could not connect to server');
+        setLoading(false);
+      });
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this user? They will not be able to sign in again.')) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/users/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        setUsers(prev => prev.filter(user => user.id !== id));
+      } else {
+        alert(data.message || 'Delete failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Could not delete user');
+    }
+  };
+
+  const openProfile = (user) => {
+    setSelectedUser(user);
+    setShowUserProfile(true);
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Registered Users</h3>
+          <p style={{ margin: '8px 0 0', color: '#6b7280' }}>View and delete bookstore user accounts.</p>
+        </div>
+      </div>
+
+      {loading && <p style={{ color: '#aaa' }}>Loading users...</p>}
+      {error && <p style={{ color: '#e53935' }}>{error}</p>}
+
+      {!loading && !error && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={styles.table}>
+            <thead>
+              <tr style={styles.thead}>
+                <th style={styles.th}>ID</th>
+                <th style={styles.th}>Admission No.</th>
+                <th style={styles.th}>Name</th>
+                <th style={styles.th}>Email</th>
+                <th style={styles.th}>Branch</th>
+                <th style={styles.th}>Year</th>
+                <th style={styles.th}>Phone</th>
+                <th style={styles.th}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.length === 0 ? (
+                <tr><td colSpan="8" style={{ padding: 24, textAlign: 'center', color: '#aaa' }}>No registered users found.</td></tr>
+              ) : users.map(user => (
+                <tr key={user.id} style={styles.tr}>
+                  <td style={styles.td}><strong>{String(user.id).padStart(3, '0')}</strong></td>
+                  <td style={styles.td}>
+                    <button
+                      onClick={() => openProfile(user)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#2bb5a0',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        padding: 0,
+                      }}
+                    >
+                      {user.username}
+                    </button>
+                  </td>
+                  <td style={styles.td}>{user.full_name}</td>
+                  <td style={styles.td}>{user.email}</td>
+                  <td style={styles.td}>{user.branch || '—'}</td>
+                  <td style={styles.td}>{user.year || '—'}</td>
+                  <td style={styles.td}>{user.phone}</td>
+                  <td style={styles.td}>
+                    <button
+                      style={{ ...styles.deleteBtn, padding: '8px 14px' }}
+                      onClick={() => handleDelete(user.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <UserProfileModal user={selectedUser} isOpen={showUserProfile} onClose={() => setShowUserProfile(false)} />
     </div>
   );

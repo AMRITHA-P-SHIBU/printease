@@ -440,6 +440,40 @@ app.get("/api/my-requests", (req, res) => {
   });
 });
 
+// ── Get All Registered Users (Print Admin) ──
+app.get('/api/admin/users', (req, res) => {
+  const sql = `SELECT id, full_name, username, email, branch, year, phone, role FROM users WHERE role NOT IN ('admin', 'bookstore_admin') ORDER BY full_name ASC`;
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ success: false, message: 'Database error' });
+    res.json({ success: true, data: results });
+  });
+});
+
+// ── Get All Registered Users (Bookstore Admin) ──
+app.get('/api/bookstore/users', (req, res) => {
+  const sql = `SELECT id, full_name, username, email, branch, year, phone, role FROM users WHERE role NOT IN ('admin', 'bookstore_admin') ORDER BY full_name ASC`;
+  db.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ success: false, message: 'Database error' });
+    res.json({ success: true, data: results });
+  });
+});
+
+// ── Delete Registered User ──
+app.delete('/api/users/:id', (req, res) => {
+  const { id } = req.params;
+  db.query('SELECT role FROM users WHERE id = ?', [id], (err, users) => {
+    if (err) return res.status(500).json({ success: false, message: 'Database error' });
+    if (!users.length) return res.status(404).json({ success: false, message: 'User not found' });
+    if (['admin', 'bookstore_admin'].includes(users[0].role)) {
+      return res.status(403).json({ success: false, message: 'Cannot delete admin user' });
+    }
+    db.query('DELETE FROM users WHERE id = ?', [id], (err) => {
+      if (err) return res.status(500).json({ success: false, message: 'Database error' });
+      res.json({ success: true, message: 'User deleted' });
+    });
+  });
+});
+
 // ════════════════════════════════════════
 // ════════════════════════════════════════
 //  BOOKSTORE ROUTES

@@ -77,7 +77,7 @@ export default function AdminDashboard() {
     totalToday: todayReqs.length,
     pending:    requests.filter(r => (r.print_status || 'Pending') === 'Pending').length,
     fastTrack:  requests.filter(r => r.mode === 'Fast Track').length,
-    revenue:    requests.filter(r => r.payment_status === 'paid').reduce((sum, r) => sum + Number(r.amount), 0),
+    revenue:    todayReqs.filter(r => r.payment_status === 'paid').reduce((sum, r) => sum + Number(r.amount), 0),
   };
 
   const latest = requests.slice(0, 5);
