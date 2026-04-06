@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
-import './Dashboard.css';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -203,33 +201,13 @@ export default function PaymentPage() {
     <div style={styles.page}>
 
       {/* Navbar */}
-      <div className="navbar">
-        <div className="nav-left">
-          <button 
-            className="nav-icon-btn" 
-            onClick={() => navigate(-1)}
-            title="Go Back"
-            aria-label="Go back to previous page"
-          >
-            <FaArrowLeft />
-          </button>
-          <h2 className="brand">PRINTEASE</h2>
-        </div>
-        <div className="nav-right">
-          <div 
-            className="avatar"
-            onClick={() => navigate(`/${role}/profile`)}
-            style={{ cursor: "pointer" }}
-          >
-            {initial}
-          </div>
-          <span 
-            className="username"
-            onClick={() => navigate(`/${role}/profile`)}
-            style={{ cursor: "pointer" }}
-          >
-            {fullName}
-          </span>
+      <div style={styles.navbar}>
+        <h2 style={styles.brand}>PRINTEASE</h2>
+        <div style={styles.navRight}>
+          <button style={styles.navBtn} onClick={() => navigate(-1)}>← Back</button>
+          <button style={styles.navBtn} onClick={() => navigate("/")}>🏠 Home</button>
+          <div style={styles.avatar}>{initial}</div>
+          <span style={styles.username}>{fullName}</span>
         </div>
       </div>
 
@@ -317,7 +295,7 @@ const styles = {
   tokenLabel:    { display: "block", fontSize: "12px", fontWeight: "700", color: "#2bb5a0", textTransform: "uppercase", letterSpacing: "1px" },
   tokenValue:    { display: "block", fontSize: "22px", fontWeight: "900", color: "#1a2e35", marginTop: "4px" },
   navbar:        { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 40px", background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", position: "sticky", top: 0, zIndex: 100, width: "100%", boxSizing: "border-box" },
-  brand:         { color: "#2bb5a0", fontWeight: "800", fontSize: "22px", margin: 0 },
+  brand:         { color: "#1b8a6b", fontWeight: "800", fontSize: "22px", margin: 0 },
   navRight:      { display: "flex", alignItems: "center", gap: "12px" },
   navBtn:        { background: "transparent", border: "1.5px solid #2bb5a0", color: "#2bb5a0", padding: "7px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer" },
   avatar:        { width: "34px", height: "34px", borderRadius: "50%", background: "#2bb5a0", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "14px" },

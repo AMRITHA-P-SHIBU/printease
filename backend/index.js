@@ -1,23 +1,23 @@
 require("dotenv").config();
 
-const express  = require("express");
-const mysql    = require("mysql2");
-const cors     = require("cors");
-const bcrypt   = require("bcrypt");
-const multer   = require("multer");
-const path     = require("path");
-const fs       = require("fs");
-const crypto   = require("crypto");
-const XLSX     = require("xlsx");
-const AdmZip   = require("adm-zip");
+const express = require("express");
+const mysql = require("mysql2");
+const cors = require("cors");
+const bcrypt = require("bcrypt");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const crypto = require("crypto");
+const XLSX = require("xlsx");
+const AdmZip = require("adm-zip");
 const { PDFParse } = require("pdf-parse");
 const pdfParse = async (dataBuffer) => {
   const parser = new PDFParse({ data: dataBuffer });
   return await parser.getInfo();
 };
-const mammoth  = require("mammoth");
+const mammoth = require("mammoth");
 const { calculateAmount } = require("./calcHelper");
-const db       = require("./db");
+const db = require("./db");
 const Razorpay = require("razorpay");
 
 const app = express();
@@ -42,7 +42,7 @@ if (!fs.existsSync(excelUploadsDir)) fs.mkdirSync(excelUploadsDir);
 // ── Multer for documents ──
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
-  filename:    (req, file, cb) => {
+  filename: (req, file, cb) => {
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, unique + "-" + file.originalname);
   }
@@ -57,7 +57,7 @@ const upload = multer({ storage, fileFilter, limits: { fileSize: 20 * 1024 * 102
 // ── Multer for Excel uploads ──
 const excelStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "excel_uploads/"),
-  filename:    (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
 });
 const excelUpload = multer({
   storage: excelStorage,
@@ -98,7 +98,7 @@ app.post("/api/register", async (req, res) => {
 app.post("/api/login", (req, res) => {
   const { username, password, role } = req.body;
   db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
-    if (err)             return res.status(500).json({ success: false, message: "Server error" });
+    if (err) return res.status(500).json({ success: false, message: "Server error" });
     if (!results.length) return res.status(400).json({ success: false, message: "User not found" });
     const user = results[0];
     if (user.role !== role) {
@@ -107,15 +107,15 @@ app.post("/api/login", (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ success: false, message: "Invalid password" });
     res.json({
-      success:   true,
-      message:   "Login successful",
-      role:      user.role,
+      success: true,
+      message: "Login successful",
+      role: user.role,
       full_name: user.full_name,
-      username:  user.username,
-      email:     user.email,
-      phone:     user.phone,
-      branch:    user.branch,
-      year:      user.year
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      branch: user.branch,
+      year: user.year
     });
   });
 });
@@ -137,70 +137,70 @@ app.post("/api/count-pages", upload.single("file"), async (req, res) => {
     console.log(`Type: ${fileType}`);
     console.log(`Path: ${filePath}`);
 
-    // PDF file
+    // ── PDF ──
     if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
       try {
         const pdfData = fs.readFileSync(filePath);
         const info = await pdfParse(pdfData);
-        
         console.log(`📄 PDF parsed successfully`);
-        console.log(`✓ Pages detected from PDF: ${info.total}`);
         pageCount = info.total || 1;
-        
-        if (pageCount < 1) {
-          pageCount = 1;
-          console.log(`⚠ Invalid page count, defaulting to 1`);
-        }
-        
+        if (pageCount < 1) pageCount = 1;
         console.log(`✓ Final PDF pages: ${pageCount}`);
       } catch (err) {
         console.error("❌ PDF parsing error:", err.message);
         pageCount = 1;
       }
     }
-    // Word document (.docx)
+
+    // ── DOCX ──
     else if (
       fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       fileName.endsWith(".docx")
     ) {
       try {
         const zip = new AdmZip(filePath);
-        const docXml = zip.readAsText("word/document.xml");
-        
-        // Count paragraphs as a more reliable page estimate
-        // Each paragraph is roughly 1-2 lines, and a page has ~30 lines
-        const paragraphs = (docXml.match(/<w:p>/g) || []).length;
-        
-        // Count page breaks in the document
-        const pageBreaks = (docXml.match(/<w:br w:type="page"\/>/g) || []).length;
-        
-        // If explicit page breaks exist, use them as base
-        if (pageBreaks > 0) {
-          pageCount = Math.max(1, pageBreaks + 1); // +1 for content after last break
-          console.log(`✓ DOCX page breaks detected: ${pageCount} pages`);
+
+        // Step 1: Read docProps/app.xml — Word stores the real rendered page count here
+        let appXmlPageCount = 0;
+        try {
+          const appXml = zip.readAsText("docProps/app.xml");
+          const pageMatch = appXml.match(/<Pages>(\d+)<\/Pages>/i);
+          if (pageMatch && parseInt(pageMatch[1]) > 0) {
+            appXmlPageCount = parseInt(pageMatch[1]);
+            console.log(`✓ DOCX app.xml page count: ${appXmlPageCount}`);
+          }
+        } catch (appXmlErr) {
+          console.warn("⚠ Could not read docProps/app.xml:", appXmlErr.message);
+        }
+
+        if (appXmlPageCount > 0) {
+          // Most accurate — directly from Word's saved metadata
+          pageCount = appXmlPageCount;
         } else {
-          // Estimate: paragraphs / 20 paragraphs per page (average)
-          pageCount = Math.max(1, Math.ceil(paragraphs / 20));
-          console.log(`✓ DOCX paragraphs: ${paragraphs}, estimated pages: ${pageCount}`);
+          // Step 2: Fallback — count lastRenderedPageBreak and manual page breaks
+          const docXml = zip.readAsText("word/document.xml");
+          const renderedBreaks = (docXml.match(/<w:lastRenderedPageBreak\/>/g) || []).length;
+          const manualBreaks = (docXml.match(/<w:br[^>]*w:type="page"/g) || []).length;
+          const totalBreaks = Math.max(renderedBreaks, manualBreaks);
+          pageCount = Math.max(1, totalBreaks + 1);
+          console.log(`✓ DOCX fallback — rendered breaks: ${renderedBreaks}, manual breaks: ${manualBreaks} → pages: ${pageCount}`);
         }
       } catch (err) {
-        console.error("❌ DOCX XML parsing error:", err.message);
-        // Fallback: try mammoth text extraction
+        console.error("❌ DOCX zip parsing error:", err.message);
+        // Step 3: Last resort — mammoth word count estimate
         try {
           const result = await mammoth.extractRawText({ path: filePath });
-          let text = result.value || "";
-          text = text.replace(/\s+/g, " ").trim();
-          const words = text.split(/\s+/).filter(w => w.length > 1);
-          const wordCount = words.length;
-          pageCount = Math.max(1, Math.ceil(wordCount / 250));
-          console.log(`✓ DOCX fallback (mammoth): ${wordCount} words → ${pageCount} pages`);
+          const words = (result.value || "").trim().split(/\s+/).filter(w => w.length > 1);
+          pageCount = Math.max(1, Math.ceil(words.length / 250));
+          console.log(`✓ DOCX mammoth fallback: ${words.length} words → ${pageCount} pages`);
         } catch (mammothErr) {
           console.error("❌ Mammoth fallback failed:", mammothErr.message);
           pageCount = 1;
         }
       }
     }
-    // PowerPoint (.pptx)
+
+    // ── PPTX ──
     else if (
       fileType === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
       fileName.endsWith(".pptx")
@@ -216,31 +216,34 @@ app.post("/api/count-pages", upload.single("file"), async (req, res) => {
         pageCount = 1;
       }
     }
-    // Old Word format (.doc)
+
+    // ── DOC (legacy Word) ──
     else if (fileType === "application/msword" || fileName.endsWith(".doc")) {
       try {
         const stats = fs.statSync(filePath);
         const fileSizeKB = stats.size / 1024;
-        // .doc files are less compressed - use ~40KB per page estimate
+        // .doc files are less compressed — ~40KB per page estimate
         pageCount = Math.max(1, Math.ceil(fileSizeKB / 40));
-        console.log(`✓ DOC file size: ${fileSizeKB}KB → ${pageCount} pages (est.)`);
+        console.log(`✓ DOC file size: ${fileSizeKB.toFixed(1)}KB → ${pageCount} pages (est.)`);
       } catch (err) {
         console.error("❌ DOC document error:", err.message);
         pageCount = 1;
       }
     }
-    // Image files
+
+    // ── Images ──
     else if (fileType && fileType.startsWith("image/")) {
       pageCount = 1;
       console.log(`✓ Image file → 1 page`);
-    } 
-    // Other file types
+    }
+
+    // ── Unknown ──
     else {
       pageCount = 1;
       console.log(`ℹ Unknown file type → 1 page (default)`);
     }
 
-    // Clean up uploaded file
+    // Clean up temp file
     fs.unlink(filePath, (err) => {
       if (err) console.error("⚠ Error deleting temp file:", err.message);
     });
@@ -269,12 +272,12 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
     }
     const tp = parseInt(total_pages) || 1;
     const finalAmount = calculateAmount({
-      printType:      print_type,
-      totalPages:     tp,
+      printType: print_type,
+      totalPages: tp,
       colorPageInput: page_numbers || "",
-      copies:         copies,
-      spiralBinding:  spiral_binding,
-      mode:           mode
+      copies: copies,
+      spiralBinding: spiral_binding,
+      mode: mode
     });
     const sql = `
       INSERT INTO print_requests 
@@ -288,8 +291,8 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
       parseInt(copies),
       print_type,
       print_layout,
-      page_numbers  || null,
-      description   || null,
+      page_numbers || null,
+      description || null,
       tp,
       spiral_binding === "true" || spiral_binding === true ? 1 : 0,
       finalAmount,
@@ -301,13 +304,13 @@ app.post("/api/print-request", upload.single("file"), (req, res) => {
         return res.status(500).json({ success: false, message: "Database error" });
       }
       return res.status(200).json({
-        success:        true,
-        message:        "Print request submitted successfully",
-        request_id:     result.insertId,
-        total_pages:    tp,
+        success: true,
+        message: "Print request submitted successfully",
+        request_id: result.insertId,
+        total_pages: tp,
         spiral_binding: spiral_binding === "true" || spiral_binding === true,
-        final_amount:   finalAmount,
-        print_layout:   print_layout
+        final_amount: finalAmount,
+        print_layout: print_layout
       });
     });
   } catch (err) {
@@ -391,9 +394,9 @@ app.get("/api/admin/print-requests", (req, res) => {
 
 // ── Update Print Status (Admin) ──
 app.put("/api/admin/print-requests/:id/status", (req, res) => {
-  const { id }     = req.params;
+  const { id } = req.params;
   const { status } = req.body;
-  const allowed    = ["Pending", "Printing", "Completed"];
+  const allowed = ["Pending", "Printing", "Completed"];
   if (!allowed.includes(status)) {
     return res.status(400).json({ success: false, message: "Invalid status" });
   }
@@ -474,7 +477,6 @@ app.delete('/api/users/:id', (req, res) => {
   });
 });
 
-// ════════════════════════════════════════
 // ════════════════════════════════════════
 //  BOOKSTORE ROUTES
 // ════════════════════════════════════════
